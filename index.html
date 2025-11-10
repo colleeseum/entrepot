@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Colle Storage" />
+    <meta
+      name="description"
+      content="Seasonal indoor and outdoor storage for RVs, cars, snowmobiles and trailers in Alfred, Ontario."
+    />
+    <title>Colle Storage | Seasonal Vehicle Storage in Alfred, Ontario</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="./static/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="./static/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="./static/favicon-16x16.png"
+    />
+    <link rel="manifest" href="./static/site.webmanifest" />
+    <link rel="stylesheet" href="./static/site.css" />
+  </head>
+
+  <body>
+    <div class="table">
+      <header class="header">
+        <div class="left"></div>
+        <div class="center header__inner">
+          <div>
+            <p class="eyebrow">Alfred • Ontario</p>
+            <p class="domaine">Colle Storage</p>
+          </div>
+          <nav class="nav">
+            <a href="#seasons">Seasons</a>
+            <a href="#facility">Facility</a>
+            <a href="#contract">Contract</a>
+            <a href="#contact">Contact</a>
+          </nav>
+        </div>
+        <div class="right"></div>
+      </header>
+
+      <main class="body">
+        <div class="left"></div>
+        <div class="center main">
+          <section class="hero">
+            <div class="hero__content">
+              <p class="eyebrow">Indoor &amp; outdoor vehicle storage</p>
+              <h1>Protect your RV, car or sled in every season</h1>
+              <p>
+                Two curated storage seasons with concrete floors, easy highway
+                access, and bilingual support. Drop off in Alfred, Ontario; pay
+                once; pick up on your schedule.
+              </p>
+              <div class="hero__cta">
+                <a class="button button--primary" href="#contract"
+                  >Reserve a spot</a
+                >
+                <a class="button button--ghost" href="tel:514-627-5377"
+                  >Call 514-627-5377</a
+                >
+              </div>
+            </div>
+            <figure class="hero__media">
+              <img
+                src="./static/images/exterior.jpg"
+                alt="Colle Storage exterior"
+                loading="lazy"
+              />
+              <figcaption>
+                Fully gated yard with dedicated concrete pads.
+              </figcaption>
+            </figure>
+          </section>
+
+          <section id="seasons" class="section">
+            <header>
+              <p class="eyebrow">Seasonal plans</p>
+              <h2>Pick the season that matches your storage window</h2>
+              <p>
+                Pricing is data-driven below so it is quick to edit as rates
+                change. Update a single array in
+                <code>static/site.js</code> and every table automatically
+                refreshes.
+              </p>
+            </header>
+            <div class="season-grid" id="season-grid"></div>
+          </section>
+
+          <section id="facility" class="section facility">
+            <header>
+              <p class="eyebrow">Why Alfred?</p>
+              <h2>Purpose-built storage only 45 minutes east of Ottawa</h2>
+              <p>
+                Located on Hwy 174, across from Tim Hortons with drive-through
+                lanes that simplify large trailer manoeuvres. The same family
+                that runs Colle Farm oversees every check-in.
+              </p>
+            </header>
+            <div class="facility__grid">
+              <article>
+                <img
+                  src="./static/images/interior.jpg"
+                  alt="Indoor storage bay"
+                  loading="lazy"
+                />
+                <h3>Indoor barn bays</h3>
+                <p>
+                  Non-heated barns with 20 ft clearance keep vehicles dry and
+                  away from UV exposure.
+                </p>
+              </article>
+              <article>
+                <img
+                  src="./static/images/yard.jpg"
+                  alt="Outdoor yard"
+                  loading="lazy"
+                />
+                <h3>Concrete outdoor pads</h3>
+                <p>
+                  Outdoor RV pads are poured concrete, ideal for RVs up to 30 ft
+                  with rear access.
+                </p>
+              </article>
+              <article>
+                <div class="facility__list">
+                  <ul>
+                    <li>
+                      Deposits: $100 per vehicle ($40 for motorcycles and
+                      sleds).
+                    </li>
+                    <li>Battery disconnect service for cars.</li>
+                    <li>
+                      Drop-off appointments coordinated 2 days (winter) or 7
+                      days (summer) ahead.
+                    </li>
+                    <li>Payments accepted via bank transfer or cash.</li>
+                    <li>Personal insurance required while stored on site.</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="contract" class="section contract">
+            <header>
+              <p class="eyebrow">Contracts &amp; deposits</p>
+              <h2>
+                Download the storage agreement or auto-fill one in seconds
+              </h2>
+              <p>
+                Start with our standard PDF or generate a draft that already
+                includes your vehicle info. Bring the signed copy plus your
+                deposit on drop-off day.
+              </p>
+            </header>
+            <div class="contract__grid">
+              <article>
+                <h3>Standard paperwork</h3>
+                <p>
+                  Always available and bilingual. You can print, sign, and bring
+                  it with your deposit.
+                </p>
+                <a
+                  class="button button--primary"
+                  href="./static/documents/storage-contract-template.pdf"
+                  download
+                >
+                  Download blank contract
+                </a>
+                <p class="contract__hint">
+                  Need to tweak terms? Replace the PDF in
+                  <code>static/documents</code> and the button will instantly
+                  serve the new file.
+                </p>
+              </article>
+              <article>
+                <h3>Smart contract helper</h3>
+                <form id="contract-helper">
+                  <label>
+                    Full name
+                    <input type="text" name="tenantName" required />
+                  </label>
+                  <label>
+                    Phone
+                    <input type="tel" name="phone" required />
+                  </label>
+                  <label>
+                    Email
+                    <input type="email" name="email" />
+                  </label>
+                  <label>
+                    Mailing address
+                    <input type="text" name="address" required />
+                  </label>
+                  <label>
+                    Season
+                    <select name="season">
+                      <option value="Winter 2025-2026">Winter 2025-2026</option>
+                      <option value="Summer 2025">Summer 2025</option>
+                    </select>
+                  </label>
+                  <label>
+                    Vehicle type
+                    <input
+                      type="text"
+                      name="vehicleType"
+                      placeholder="RV, car, sled, trailer…"
+                      required
+                    />
+                  </label>
+                  <label class="grid-2">
+                    Length (ft)
+                    <input type="number" name="length" min="5" max="45" />
+                  </label>
+                  <label class="grid-2">
+                    Plate &amp; province
+                    <input type="text" name="plate" placeholder="ABC123 - ON" />
+                  </label>
+                  <label>
+                    Insurance company
+                    <input type="text" name="insuranceCompany" />
+                  </label>
+                  <label class="grid-2">
+                    Policy number
+                    <input type="text" name="policyNumber" />
+                  </label>
+                  <label class="grid-2">
+                    Deposit ($)
+                    <input
+                      type="number"
+                      name="deposit"
+                      min="40"
+                      step="5"
+                      value="100"
+                    />
+                  </label>
+                  <label>
+                    Notes
+                    <textarea
+                      name="notes"
+                      rows="3"
+                      placeholder="Add extra drivers, storage requests or bank transfer info"
+                    ></textarea>
+                  </label>
+                  <button class="button button--primary" type="submit">
+                    Generate filled PDF
+                  </button>
+                  <p class="contract__hint">
+                    Powered by <code>pdf-lib</code>. The draft PDF opens locally
+                    and never leaves your browser.
+                  </p>
+                </form>
+              </article>
+            </div>
+          </section>
+
+          <section class="section info">
+            <header>
+              <p class="eyebrow">Storage rules</p>
+              <h2>Simple guardrails keep everyone on schedule</h2>
+            </header>
+            <div class="info__grid">
+              <article>
+                <h3>Winter key dates</h3>
+                <ul>
+                  <li>Drop-off window: 17 October – 1 November 2025.</li>
+                  <li>Pick-up deadline: 26 April 2026 ($5/day late fee).</li>
+                  <li>No gasoline cans or propane tanks in stored vehicles.</li>
+                </ul>
+              </article>
+              <article>
+                <h3>Summer key dates</h3>
+                <ul>
+                  <li>Season: 3 May – 10 October 2025.</li>
+                  <li>Pick-up times confirmed 7 days ahead.</li>
+                  <li>Battery disconnect service included for cars.</li>
+                </ul>
+              </article>
+              <article>
+                <h3>Access &amp; maintenance</h3>
+                <ul>
+                  <li>
+                    Vehicles remain locked; access during storage triggers a
+                    handling fee.
+                  </li>
+                  <li>
+                    Notify us 48 hours before winter drop-offs and 7 days before
+                    summer pickups.
+                  </li>
+                  <li>
+                    Tell us if a vehicle leaks oil so we can prep drip trays.
+                  </li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <section id="contact" class="section contact">
+            <header>
+              <p class="eyebrow">Ready to store?</p>
+              <h2>
+                Call, email or send the form—everything routes to the Colle
+                family
+              </h2>
+            </header>
+            <div class="contact__grid">
+              <article>
+                <h3>Talk to us</h3>
+                <p>
+                  Phone: <a href="tel:514-627-5377">514-627-5377</a><br />
+                  Email:
+                  <a href="mailto:storage@as-colle.com">storage@as-colle.com</a
+                  ><br />
+                  Site: 108 St-Philippe (Hwy 174), Alfred, ON K0B 1A0
+                </p>
+                <p>
+                  We are 1h15 from Montréal and 45 minutes from Ottawa.
+                  Drop-offs are by appointment to keep traffic moving.
+                </p>
+              </article>
+              <article>
+                <h3>Email shortcut</h3>
+                <form id="contact-form">
+                  <label>
+                    Your name
+                    <input type="text" name="name" required />
+                  </label>
+                  <label>
+                    Email
+                    <input type="email" name="email" required />
+                  </label>
+                  <label>
+                    Vehicle type
+                    <input type="text" name="vehicle" />
+                  </label>
+                  <label>
+                    Message
+                    <textarea
+                      name="message"
+                      rows="4"
+                      required
+                      placeholder="Tell us what you need stored & your ideal drop-off date"
+                    ></textarea>
+                  </label>
+                  <button type="submit" class="button button--ghost">
+                    Compose email
+                  </button>
+                </form>
+                <p class="contract__hint">
+                  Submitting opens a ready-to-send email so nothing gets lost.
+                </p>
+              </article>
+            </div>
+          </section>
+        </div>
+        <div class="right"></div>
+      </main>
+
+      <footer class="footer">
+        <div class="left"></div>
+        <div class="center footer__inner">
+          <div>
+            <span class="container_title">Address</span>
+            <p>
+              108 St-Philippe (Hwy 174)<br />
+              Alfred, Ontario<br />
+              K0B 1A0
+            </p>
+          </div>
+          <div>
+            <span class="container_title">Bookings</span>
+            <p>
+              <a href="tel:514-627-5377">514-627-5377</a><br />
+              <a href="mailto:storage@as-colle.com">storage@as-colle.com</a>
+            </p>
+          </div>
+          <div>
+            <span class="container_title">Office</span>
+            <p>Colle Farm • 276 rue Dolbec, St-Eustache, QC J7R 6N5</p>
+          </div>
+        </div>
+        <div class="right"></div>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="./static/site.js" type="module"></script>
+  </body>
+</html>
