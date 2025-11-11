@@ -1,0 +1,57 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Ferme Colle Contract Illustration</title>
+  <desc id="desc">Stylized contract with heading Ferme Colle and a pen resting on the paper.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fdfdfd" />
+      <stop offset="100%" stop-color="#f1f3f6" />
+    </linearGradient>
+    <linearGradient id="pen-body" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f1a3a" />
+      <stop offset="100%" stop-color="#253a6b" />
+    </linearGradient>
+    <linearGradient id="pen-highlight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4af37" />
+      <stop offset="100%" stop-color="#f8d77c" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#b9cee1" />
+  <rect x="120" y="70" width="272" height="352" rx="18" fill="#dfe7f0" />
+  <rect x="100" y="50" width="272" height="352" rx="18" fill="#edf1f7" />
+  <rect x="92" y="74" width="272" height="352" rx="22" fill="url(#paper)" stroke="#d0d8e6" stroke-width="3" />
+  <text x="228" y="130" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="700" fill="#4a5568">FERME COLLE</text>
+
+  <g fill="#b4bccb">
+    <rect x="130" y="158" width="196" height="10" rx="5" />
+    <rect x="130" y="182" width="220" height="10" rx="5" />
+    <rect x="130" y="206" width="220" height="10" rx="5" />
+    <rect x="130" y="230" width="200" height="10" rx="5" />
+    <rect x="130" y="254" width="220" height="10" rx="5" />
+    <rect x="130" y="278" width="180" height="10" rx="5" />
+    <rect x="130" y="302" width="200" height="10" rx="5" />
+  </g>
+
+  <rect x="130" y="332" width="200" height="12" rx="6" fill="#6c7894" opacity="0.8" />
+
+  <g transform="translate(120 360)">
+    <circle cx="30" cy="30" r="26" fill="none" stroke="#7a88a8" stroke-width="4" />
+    <circle cx="30" cy="30" r="16" fill="none" stroke="#c8cedd" stroke-width="4" />
+    <path d="M5 50 Q30 55 54 34" fill="none" stroke="#535e78" stroke-width="5" stroke-linecap="round" />
+    <path d="M40 58 Q58 35 70 40" fill="none" stroke="#2f3a55" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <g transform="rotate(-18 360 330)">
+    <!-- Pen barrel -->
+    <rect x="250" y="268" width="210" height="24" rx="12" fill="url(#pen-body)" stroke="#050b19" stroke-width="2" />
+    <!-- Grip section -->
+    <rect x="250" y="268" width="60" height="24" rx="12" fill="#111b36" />
+    <!-- Cap ring -->
+    <rect x="312" y="268" width="12" height="24" fill="url(#pen-highlight)" />
+    <!-- Barrel accent -->
+    <rect x="368" y="268" width="12" height="24" fill="url(#pen-highlight)" />
+    <!-- Tip section -->
+    <rect x="420" y="268" width="28" height="24" rx="8" fill="#f6d18b" stroke="#b88628" stroke-width="2" />
+    <path d="M448 270 L468 280 L448 290 Z" fill="#f4c56a" stroke="#b88628" stroke-width="2" />
+    <circle cx="468" cy="280" r="5" fill="#192347" stroke="#050b19" stroke-width="2" />
+  </g>
+</svg>

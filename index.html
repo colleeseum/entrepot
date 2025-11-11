@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="author" content="Colle Storage" />
+    <meta name="author" content="Ferme Colle : Storage" />
     <meta
       name="description"
       content="Seasonal indoor and outdoor storage for RVs, cars, snowmobiles and trailers in Alfred, Ontario."
@@ -79,44 +79,35 @@
             <figure class="hero__media">
               <img
                 src="./static/images/exterior.jpg"
-                alt="Colle Storage exterior"
+                alt="Drive-through exterior yard and barns"
                 loading="lazy"
               />
               <figcaption>
-                Fully gated yard with dedicated concrete pads.
+                Most vehicles stay indoors in 20 ft tall barns with monitored
+                access.
               </figcaption>
             </figure>
-          </section>
-
-          <section id="seasons" class="section">
-            <header>
-              <p class="eyebrow">Seasonal plans</p>
-              <h2>Pick the season that matches your storage window</h2>
-              <p>
-                Pricing is data-driven below so it is quick to edit as rates
-                change. Update a single array in
-                <code>static/site.js</code> and every table automatically
-                refreshes.
-              </p>
-            </header>
-            <div class="season-grid" id="season-grid"></div>
           </section>
 
           <section id="facility" class="section facility">
             <header>
               <p class="eyebrow">Why Alfred?</p>
-              <h2>Purpose-built storage only 45 minutes east of Ottawa</h2>
+              <h2>
+                Purpose-built storage only 45 minutes east of Ottawa / 60
+                minutes west of Montreal
+              </h2>
               <p>
-                Located on Hwy 174, across from Tim Hortons with drive-through
-                lanes that simplify large trailer manoeuvres. The same family
-                that runs Colle Farm oversees every check-in.
+                Located in Alfred, Ontario with multiple indoor barns for RVs,
+                cars and sleds, plus drive-through lanes and an outdoor yard
+                poured in concrete. The same family that runs Colle Farm
+                oversees every check-in.
               </p>
             </header>
             <div class="facility__grid">
               <article>
                 <img
-                  src="./static/images/interior.jpg"
-                  alt="Indoor storage bay"
+                  src="./static/images/interior-full.jpg"
+                  alt="Indoor bay with RVs and a pickup truck"
                   loading="lazy"
                 />
                 <h3>Indoor barn bays</h3>
@@ -127,7 +118,7 @@
               </article>
               <article>
                 <img
-                  src="./static/images/yard.jpg"
+                  src="./static/images/outside.jpg"
                   alt="Outdoor yard"
                   loading="lazy"
                 />
@@ -141,8 +132,8 @@
                 <div class="facility__list">
                   <ul>
                     <li>
-                      Deposits: $100 per vehicle ($40 for motorcycles and
-                      sleds).
+                      Deposits: $100 when the estimate exceeds $250, otherwise
+                      $50.
                     </li>
                     <li>Battery disconnect service for cars.</li>
                     <li>
@@ -157,6 +148,46 @@
             </div>
           </section>
 
+          <section id="seasons" class="section">
+            <header>
+              <p class="eyebrow">Seasonal plans</p>
+              <h2>Pick the season that matches your storage window</h2>
+            </header>
+            <div class="season-grid" id="season-grid"></div>
+          </section>
+
+          <section class="section services">
+            <header>
+              <p class="eyebrow">Add-on services</p>
+              <h2>Keep essentials onsite so pickup day is effortless</h2>
+              <p>
+                Select any add-on when you schedule your drop-off—each service
+                is billed with your storage balance.
+              </p>
+            </header>
+            <div class="services__grid">
+              <article>
+                <h3>Battery maintenance</h3>
+                <p>
+                  Intelligent chargers keep your battery topped up and
+                  conditioned while the vehicle is parked indoors. Add the
+                  service for
+                  <strong><span data-service-price="battery"></span></strong>;
+                  otherwise disconnect and take the battery with you.
+                </p>
+              </article>
+              <article>
+                <h3>Propane tank storage</h3>
+                <p>
+                  Drop your propane tank at check-in and we store it separately
+                  in our ventilated cage so your RV can stay on site. Flat
+                  <strong><span data-service-price="propane"></span></strong>
+                  per tank per season.
+                </p>
+              </article>
+            </div>
+          </section>
+
           <section id="contract" class="section contract">
             <header>
               <p class="eyebrow">Contracts &amp; deposits</p>
@@ -164,107 +195,313 @@
                 Download the storage agreement or auto-fill one in seconds
               </h2>
               <p>
-                Start with our standard PDF or generate a draft that already
-                includes your vehicle info. Bring the signed copy plus your
-                deposit on drop-off day.
+                Start with our standard PDF or use our smart contract helper to
+                generate a draft that already includes your vehicle info.
               </p>
             </header>
             <div class="contract__grid">
               <article>
                 <h3>Standard paperwork</h3>
                 <p>
-                  Always available and bilingual. You can print, sign, and bring
-                  it with your deposit.
+                  Always available and bilingual. Use the fillable PDF form,
+                  sign digitally or by hand, and email it to
+                  <a href="mailto:storage@as-colle.com">storage@as-colle.com</a
+                  >. Once our team validates the information, they will reach
+                  out for a deposit to reserve your spot.
                 </p>
+                <figure class="contract-illustration" aria-hidden="true">
+                  <img
+                    src="./static/images/ferme-colle-contract.svg"
+                    alt=""
+                    loading="lazy"
+                    aria-hidden="true"
+                  />
+                </figure>
                 <a
                   class="button button--primary"
-                  href="./static/documents/storage-contract-template.pdf"
+                  href="./static/documents/storage-contract-template-d848.pdf"
                   download
                 >
                   Download blank contract
                 </a>
-                <p class="contract__hint">
+                <!--p class="contract__hint">
                   Need to tweak terms? Replace the PDF in
                   <code>static/documents</code> and the button will instantly
                   serve the new file.
-                </p>
+                </p-->
               </article>
               <article>
                 <h3>Smart contract helper</h3>
                 <form id="contract-helper">
-                  <label>
-                    Full name
-                    <input type="text" name="tenantName" required />
-                  </label>
-                  <label>
-                    Phone
-                    <input type="tel" name="phone" required />
-                  </label>
-                  <label>
-                    Email
-                    <input type="email" name="email" />
-                  </label>
-                  <label>
-                    Mailing address
-                    <input type="text" name="address" required />
-                  </label>
-                  <label>
-                    Season
-                    <select name="season">
-                      <option value="Winter 2025-2026">Winter 2025-2026</option>
-                      <option value="Summer 2025">Summer 2025</option>
-                    </select>
-                  </label>
-                  <label>
-                    Vehicle type
-                    <input
-                      type="text"
-                      name="vehicleType"
-                      placeholder="RV, car, sled, trailer…"
-                      required
-                    />
-                  </label>
-                  <label class="grid-2">
-                    Length (ft)
-                    <input type="number" name="length" min="5" max="45" />
-                  </label>
-                  <label class="grid-2">
-                    Plate &amp; province
-                    <input type="text" name="plate" placeholder="ABC123 - ON" />
-                  </label>
-                  <label>
-                    Insurance company
-                    <input type="text" name="insuranceCompany" />
-                  </label>
-                  <label class="grid-2">
-                    Policy number
-                    <input type="text" name="policyNumber" />
-                  </label>
-                  <label class="grid-2">
-                    Deposit ($)
-                    <input
-                      type="number"
-                      name="deposit"
-                      min="40"
-                      step="5"
-                      value="100"
-                    />
-                  </label>
-                  <label>
-                    Notes
-                    <textarea
-                      name="notes"
-                      rows="3"
-                      placeholder="Add extra drivers, storage requests or bank transfer info"
-                    ></textarea>
-                  </label>
-                  <button class="button button--primary" type="submit">
-                    Generate filled PDF
+                  <div class="form-steps-nav">
+                    <button type="button" data-step-target="1" class="active">
+                      1. Tenant
+                    </button>
+                    <button type="button" data-step-target="2">
+                      2. Vehicle
+                    </button>
+                    <button type="button" data-step-target="3">
+                      3. Insurance &amp; add-ons
+                    </button>
+                    <button type="button" data-step-target="4">
+                      4. Review &amp; submit
+                    </button>
+                  </div>
+                  <div class="form-step active" data-step="1">
+                    <label>
+                      Season
+                      <select name="season" required>
+                        <option value="" selected disabled>
+                          -- Please select one --
+                        </option>
+                        <option value="Winter 2026-2027">
+                          Winter 2026-2027
+                        </option>
+                        <option value="Summer 2026">Summer 2026</option>
+                      </select>
+                    </label>
+                    <label>
+                      Full name
+                      <input
+                        type="text"
+                        name="tenantName"
+                        autocomplete="section-tenant name"
+                        required
+                      />
+                    </label>
+                    <div class="form-row form-row--two form-row--phone-email">
+                      <label class="grid-2">
+                        Phone
+                        <input
+                          type="tel"
+                          name="tenantPhone"
+                          autocomplete="section-tenant tel"
+                          required
+                        />
+                      </label>
+                      <label class="grid-2">
+                        Email
+                        <input
+                          type="email"
+                          name="tenantEmail"
+                          autocomplete="section-tenant email"
+                        />
+                      </label>
+                    </div>
+                    <label>
+                      Mailing address
+                      <input
+                        type="text"
+                        name="tenantAddress"
+                        autocomplete="section-tenant street-address"
+                        required
+                      />
+                    </label>
+                    <div class="form-row form-row--city-block">
+                      <label class="grid-2">
+                        City
+                        <input
+                          type="text"
+                          name="tenantCity"
+                          autocomplete="section-tenant address-level2"
+                          required
+                        />
+                      </label>
+                      <label class="grid-2 postal-field">
+                        Postal code
+                        <input
+                          type="text"
+                          name="tenantPostal"
+                          autocomplete="section-tenant postal-code"
+                          placeholder="A1A 1A1"
+                          required
+                        />
+                      </label>
+                      <label class="grid-2 province-field">
+                        Province
+                        <select
+                          name="tenantProvince"
+                          autocomplete="section-tenant address-level1"
+                          required
+                        >
+                          <option value="" selected disabled>
+                            --
+                          </option>
+                          <option value="ON">ON</option>
+                          <option value="QC">QC</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-step" data-step="2">
+                    <label>
+                      Vehicle type
+                      <select
+                        name="vehicleType"
+                        id="vehicle-type-select"
+                        required
+                      >
+                        <option value="" selected disabled>
+                          -- Please select one --
+                        </option>
+                        <option value="RV/Motorhome">RV/Motorhome</option>
+                        <option value="Car">Car</option>
+                        <option value="Truck">Truck</option>
+                        <option value="Motorcycle">Motorcycle</option>
+                        <option value="Can-Am Spyder">Can-Am Spyder</option>
+                        <option value="Snowmobile">Snowmobile</option>
+                        <option value="Snowmobile + single trailer">
+                          Snowmobile + single trailer
+                        </option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </label>
+                    <label id="vehicle-type-other" class="hidden">
+                      Please specify
+                      <input type="text" name="vehicleTypeOther" />
+                    </label>
+                    <div class="form-row form-row--vehicle">
+                      <label class="grid-2">
+                        Brand
+                        <input type="text" name="vehicleBrand" />
+                      </label>
+                      <label class="grid-2">
+                        Model
+                        <input type="text" name="vehicleModel" />
+                      </label>
+                    </div>
+                    <div class="form-row form-row--vehicle form-row--vehicle-triple">
+                      <label class="grid-2">
+                        Colour
+                        <input type="text" name="vehicleColour" />
+                      </label>
+                      <label class="grid-2">
+                        Length (ft)
+                        <input
+                          type="number"
+                          name="vehicleLength"
+                          min="5"
+                          max="60"
+                        />
+                      </label>
+                      <label class="grid-2 vehicle-year">
+                        Year
+                        <input
+                          type="number"
+                          name="vehicleYear"
+                          min="1950"
+                          max="2050"
+                          required
+                          inputmode="numeric"
+                        />
+                      </label>
+                    </div>
+                    <div class="form-row form-row--vehicle">
+                      <label class="grid-2">
+                        Plate
+                        <input
+                          type="text"
+                          name="vehiclePlate"
+                          placeholder="ABC123"
+                        />
+                      </label>
+                      <label class="grid-2">
+                        Province
+                        <select name="vehicleProv" required>
+                          <option value="" selected disabled>
+                            -- Please select one --
+                          </option>
+                          <option value="ON">Ontario (ON)</option>
+                          <option value="QC">Québec (QC)</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-step" data-step="3">
+                    <label>
+                      Insurance company
+                      <input type="text" name="insuranceCompany" />
+                    </label>
+                    <label class="grid-2">
+                      Policy number
+                      <input type="text" name="insurancePolicy" />
+                    </label>
+                    <label class="grid-2">
+                      Expiration
+                      <input type="date" name="insuranceExpiration" />
+                    </label>
+                    <div class="form-divider" aria-hidden="true"></div>
+                    <label class="checkbox">
+                      <input type="checkbox" name="battery" value="yes" />
+                      Battery charging service
+                    </label>
+                    <label class="checkbox">
+                      <input type="checkbox" name="propane" value="yes" />
+                      Propane tank storage
+                    </label>
+                  </div>
+                  <div class="form-step" data-step="4">
+                    <label class="grid-2">
+                      Deposit ($) — auto: $100 if estimate > $250, else $50
+                      <input
+                        type="number"
+                        name="deposit"
+                        min="50"
+                        step="50"
+                        value="100"
+                        readonly
+                      />
+                    </label>
+                    <label class="grid-2">
+                      Lease duration
+                      <input
+                        type="text"
+                        name="leaseDuration"
+                        readonly
+                        placeholder="Completed by Colle Storage"
+                      />
+                    </label>
+                    <label class="grid-2">
+                      Estimated rental cost
+                      <input
+                        type="text"
+                        name="leaseCost"
+                        readonly
+                        placeholder="Completed by Colle Storage"
+                      />
+                    </label>
+                    <label>
+                      Notes
+                      <textarea
+                        name="notes"
+                        rows="3"
+                        placeholder="Add extra drivers, storage requests or bank transfer info"
+                      ></textarea>
+                    </label>
+                    <button class="button button--primary" type="submit">
+                      Preview PDF
+                    </button>
+                    <p class="contract__hint">
+                      Powered by <code>pdf-lib</code>. The draft PDF opens
+                      locally and never leaves your browser.
+                    </p>
+                  </div>
+                  <div class="form-step-controls">
+                    <button
+                    type="button"
+                    class="button button--ghost"
+                    data-step-prev
+                  >
+                    Back
                   </button>
-                  <p class="contract__hint">
-                    Powered by <code>pdf-lib</code>. The draft PDF opens locally
-                    and never leaves your browser.
-                  </p>
+                  <button
+                    type="button"
+                    class="button button--primary"
+                    data-step-next
+                  >
+                    Next
+                  </button>
+                </div>
                 </form>
               </article>
             </div>
@@ -275,40 +512,7 @@
               <p class="eyebrow">Storage rules</p>
               <h2>Simple guardrails keep everyone on schedule</h2>
             </header>
-            <div class="info__grid">
-              <article>
-                <h3>Winter key dates</h3>
-                <ul>
-                  <li>Drop-off window: 17 October – 1 November 2025.</li>
-                  <li>Pick-up deadline: 26 April 2026 ($5/day late fee).</li>
-                  <li>No gasoline cans or propane tanks in stored vehicles.</li>
-                </ul>
-              </article>
-              <article>
-                <h3>Summer key dates</h3>
-                <ul>
-                  <li>Season: 3 May – 10 October 2025.</li>
-                  <li>Pick-up times confirmed 7 days ahead.</li>
-                  <li>Battery disconnect service included for cars.</li>
-                </ul>
-              </article>
-              <article>
-                <h3>Access &amp; maintenance</h3>
-                <ul>
-                  <li>
-                    Vehicles remain locked; access during storage triggers a
-                    handling fee.
-                  </li>
-                  <li>
-                    Notify us 48 hours before winter drop-offs and 7 days before
-                    summer pickups.
-                  </li>
-                  <li>
-                    Tell us if a vehicle leaks oil so we can prep drip trays.
-                  </li>
-                </ul>
-              </article>
-            </div>
+            <div class="info__grid" id="storage-rules"></div>
           </section>
 
           <section id="contact" class="section contact">
@@ -327,7 +531,7 @@
                   Email:
                   <a href="mailto:storage@as-colle.com">storage@as-colle.com</a
                   ><br />
-                  Site: 108 St-Philippe (Hwy 174), Alfred, ON K0B 1A0
+                  Site: Conc 4, Alfred, ON K0B 1A0
                 </p>
                 <p>
                   We are 1h15 from Montréal and 45 minutes from Ottawa.
@@ -339,11 +543,21 @@
                 <form id="contact-form">
                   <label>
                     Your name
-                    <input type="text" name="name" required />
+                    <input
+                      type="text"
+                      name="name"
+                      autocomplete="section-contact name"
+                      required
+                    />
                   </label>
                   <label>
                     Email
-                    <input type="email" name="email" required />
+                    <input
+                      type="email"
+                      name="email"
+                      autocomplete="section-contact email"
+                      required
+                    />
                   </label>
                   <label>
                     Vehicle type
@@ -370,15 +584,89 @@
           </section>
         </div>
         <div class="right"></div>
-      </main>
+  </main>
 
-      <footer class="footer">
+  <div
+    id="contract-preview-modal"
+    class="contract-modal hidden"
+    aria-hidden="true"
+  >
+    <div class="contract-modal__backdrop" data-preview-close></div>
+    <div
+      class="contract-modal__dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="contract-preview-title"
+    >
+      <header class="contract-modal__header">
+        <div>
+          <p class="eyebrow">Preview &amp; export</p>
+          <h3 id="contract-preview-title">Contract preview</h3>
+          <p id="contract-preview-status">
+            Generate a preview to review details before exporting.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="contract-modal__close"
+          data-preview-close
+          aria-label="Close preview"
+        >
+          &times;
+        </button>
+      </header>
+      <div class="contract-modal__actions">
+        <div class="contract-modal__hint">
+          <p>
+            Once signed, email the contract to
+            <a href="mailto:storage@as-colle.com">storage@as-colle.com</a>.
+            <button
+              type="button"
+              class="contract-modal__hint-info"
+              aria-label="Signing instructions"
+              data-signing-info-trigger
+            >
+              ?
+            </button>
+          </p>
+          <div
+            class="contract-modal__hint-popover"
+            role="tooltip"
+            data-signing-info
+            hidden
+          >
+            <p>Recommended ways to complete the signature:</p>
+            <ul>
+              <li>Sign digitally in a PDF app such as Adobe Acrobat</li>
+              <li>Print, sign, scan and email the file</li>
+              <li>Use any signing process your organization prefers</li>
+            </ul>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="button button--ghost"
+          data-preview-download
+          disabled
+        >
+          Download PDF
+        </button>
+      </div>
+      <iframe
+        id="contract-preview-frame"
+        title="Contract preview"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+
+  <footer class="footer">
         <div class="left"></div>
         <div class="center footer__inner">
           <div>
             <span class="container_title">Address</span>
             <p>
-              108 St-Philippe (Hwy 174)<br />
+              Conc 4<br />
               Alfred, Ontario<br />
               K0B 1A0
             </p>
