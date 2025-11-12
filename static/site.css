@@ -501,6 +501,13 @@ label {
   background: #f8fafc;
 }
 
+.contract__mobile-note {
+  display: none;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
 @media (max-width: 768px) {
   .contract-modal__dialog {
     padding: 16px;
@@ -510,6 +517,14 @@ label {
   .contract-modal__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .contract-helper {
+    display: none;
+  }
+
+  .contract__mobile-note {
+    display: block;
   }
 }
 
