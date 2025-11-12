@@ -576,16 +576,18 @@ const handleContractHelper = () => {
       popoverVisible = !popoverVisible;
       toggleSigningPopover(popoverVisible);
     });
-    previewModal?.addEventListener("click", (event) => {
-      if (!popoverVisible) return;
-      if (
-        event.target !== signingInfoTrigger &&
-        !signingInfoPopover.contains(event.target)
-      ) {
-        popoverVisible = false;
-        toggleSigningPopover(false);
-      }
-    });
+    if (previewModal) {
+      previewModal.addEventListener("click", (event) => {
+        if (!popoverVisible) return;
+        if (
+          event.target !== signingInfoTrigger &&
+          !signingInfoPopover.contains(event.target)
+        ) {
+          popoverVisible = false;
+          toggleSigningPopover(false);
+        }
+      });
+    }
   }
 
   const showPreview = ({ url, filename }) => {
@@ -622,11 +624,13 @@ const handleContractHelper = () => {
     toggleSigningPopover(false);
   };
 
-  previewDownloadBtn?.addEventListener("click", () => {
-    if (!previewUrl) return;
-    triggerDownload(previewUrl, previewFilename);
-    closePreview();
-  });
+  if (previewDownloadBtn) {
+    previewDownloadBtn.addEventListener("click", () => {
+      if (!previewUrl) return;
+      triggerDownload(previewUrl, previewFilename);
+      closePreview();
+    });
+  }
 
   previewCloseElements.forEach((el) =>
     el.addEventListener("click", () => {
@@ -638,11 +642,13 @@ const handleContractHelper = () => {
       closePreview();
     }
   });
-  previewModal?.addEventListener("click", (event) => {
-    if (event.target === previewModal) {
-      closePreview();
-    }
-  });
+  if (previewModal) {
+    previewModal.addEventListener("click", (event) => {
+      if (event.target === previewModal) {
+        closePreview();
+      }
+    });
+  }
 
   window.addEventListener("beforeunload", cleanupPreviewUrl);
   updatePreviewActions(false);
@@ -690,8 +696,10 @@ const generateContractPdf = async (data) => {
     try {
       field.updateAppearances(helvetica);
     } catch (err) {
+      const fieldName =
+        typeof field.getName === "function" ? field.getName() : "unknown";
       console.warn(
-        `Unable to update appearance for ${field.getName?.() || "unknown"}`,
+        `Unable to update appearance for ${fieldName}`,
         err,
       );
     }
