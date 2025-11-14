@@ -116,6 +116,33 @@ img {
   transform: scaleX(1);
 }
 
+.language-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.language-toggle__btn {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: #f8fafc;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.language-toggle__btn.active,
+.language-toggle__btn:hover {
+  background: #f8fafc;
+  color: var(--surface-alt);
+  border-color: #f8fafc;
+}
+
 .main {
   display: flex;
   flex-direction: column;
@@ -186,6 +213,16 @@ img {
 .button--ghost:hover {
   color: #fff;
   background: var(--surface-alt);
+}
+
+.button--sm {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
+.contract-reset {
+  margin-bottom: 12px;
+  align-self: flex-start;
 }
 
 .hero__media figcaption {
@@ -265,7 +302,7 @@ img {
 .contract__grid {
   margin-top: 32px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
 }
 
@@ -296,6 +333,25 @@ label {
   gap: 6px;
 }
 
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+.form-row--full {
+  grid-template-columns: 1fr;
+  grid-column: 1 / -1;
+}
+
+.form-addons-title {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 8px 0 4px;
+}
+
 .form-section-title {
   margin-top: 16px;
   margin-bottom: 4px;
@@ -311,6 +367,10 @@ label {
   align-items: center;
   gap: 8px;
   font-weight: 500;
+}
+
+.checkbox.disabled {
+  opacity: 0.5;
 }
 
 .checkbox input {
@@ -522,7 +582,9 @@ label {
   .contract-helper {
     display: none;
   }
+}
 
+@media (max-width: 600px) {
   .contract__mobile-note {
     display: block;
   }
@@ -531,6 +593,7 @@ label {
 input,
 select,
 textarea {
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 14px;
@@ -567,8 +630,8 @@ textarea {
 }
 
 .postal-field input {
-  width: 90px;
-  min-width: 80px;
+  width: 115px;
+  min-width: 105px;
 }
 
 .vehicle-year input {
@@ -578,7 +641,7 @@ textarea {
 }
 
 .form-row--city-block {
-  grid-template-columns: minmax(220px, 1fr) 90px auto;
+  grid-template-columns: minmax(220px, 1fr) 115px auto;
 }
 
 .form-row--vehicle {
@@ -629,6 +692,9 @@ textarea {
   border-radius: 20px;
   padding: 24px;
   background: #fcfbf8;
+}
+.contract__grid {
+  grid-template-columns: minmax(240px, 360px) minmax(320px, 1fr);
 }
 
 .info__grid ul,

@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="author" content="Ferme Colle : Storage" />
+    <meta name="author" content="Ferme Colle : Storage | Entreposage" />
     <meta
       name="description"
       content="Seasonal indoor and outdoor storage for RVs, cars, snowmobiles and trailers near Ottawa and Montreal from Alfred, Ontario."
     />
-    <title>Ferme Colle: Storage | Seasonal Vehicle Storage near Ottawa & Montreal</title>
+    <title>Ferme Colle : Storage | Entreposage saisonnier près d’Ottawa & Montréal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -38,7 +38,7 @@
       {
         "@context": "https://schema.org",
         "@type": "SelfStorage",
-        "name": "Ferme Colle: Storage",
+        "name": "Ferme Colle"
         "url": "https://entrepot.as-colle.com/",
         "telephone": "+1-514-627-5377",
         "email": "storage@as-colle.com",
@@ -76,14 +76,36 @@
         <div class="center header__inner">
           <div>
             <p class="eyebrow">Alfred • Ontario</p>
-            <p class="domaine">Ferme Colle: Storage</p>
+            <p class="domaine">Ferme Colle</p>
           </div>
           <nav class="nav">
-            <a href="#seasons">Seasons</a>
-            <a href="#facility">Facility</a>
-            <a href="#contract">Contract</a>
-            <a href="#contact">Contact</a>
+            <a href="#seasons" data-i18n="nav.seasons">Seasons</a>
+            <a href="#facility" data-i18n="nav.facility">Facility</a>
+            <a href="#contract" data-i18n="nav.contract">Contract</a>
+            <a href="#contact" data-i18n="nav.contact">Contact</a>
           </nav>
+          <div
+            class="language-toggle"
+            role="group"
+            aria-label="Language selector"
+            data-i18n="header.languageLabel"
+            data-i18n-attr="aria-label"
+          >
+            <button
+              type="button"
+              class="language-toggle__btn active"
+              data-lang-toggle="en"
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              class="language-toggle__btn"
+              data-lang-toggle="fr"
+            >
+              FR
+            </button>
+          </div>
         </div>
         <div class="right"></div>
       </header>
@@ -93,46 +115,58 @@
         <div class="center main">
           <section class="hero">
             <div class="hero__content">
-              <p class="eyebrow">Indoor &amp; outdoor vehicle storage</p>
-              <h1>Protect your RV, car or sled in every season</h1>
-              <p>
+              <p class="eyebrow" data-i18n="hero.eyebrow">
+                Indoor &amp; outdoor vehicle storage
+              </p>
+              <h1 data-i18n="hero.title">
+                Protect your RV, car or sled in every season
+              </h1>
+              <p data-i18n="hero.description">
                 Two curated storage seasons with concrete floors, easy highway
                 access, and bilingual support. Drop off in Alfred, Ontario; pay
                 once; pick up on your schedule.
               </p>
               <div class="hero__cta">
-                <a class="button button--primary" href="#contract"
-                  >Reserve a spot</a
+                <a
+                  class="button button--primary"
+                  href="#contract"
+                  data-i18n="hero.ctaReserve"
                 >
-                <a class="button button--ghost" href="tel:514-627-5377"
-                  >Call 514-627-5377</a
+                  Reserve a spot
+                </a>
+                <a
+                  class="button button--ghost"
+                  href="tel:514-627-5377"
+                  data-i18n="hero.ctaCall"
                 >
+                  Call 514-627-5377
+                </a>
               </div>
             </div>
             <figure class="hero__media">
               <img
                 src="./static/images/exterior.jpg"
-                alt="Drive-through exterior yard and barns"
+                alt="Drive-through exterior yard and warehouses"
                 loading="lazy"
               />
-              <figcaption>
-                Most vehicles stay indoors in 20 ft tall barns with monitored
-                access.
+              <figcaption data-i18n="hero.caption">
+                Most vehicles stay indoors in 20 ft tall warehouses with
+                monitored access.
               </figcaption>
             </figure>
           </section>
 
           <section id="facility" class="section facility">
             <header>
-              <p class="eyebrow">Why Alfred?</p>
-              <h2>
+              <p class="eyebrow" data-i18n="facility.eyebrow">Why Alfred?</p>
+              <h2 data-i18n="facility.heading">
                 Purpose-built storage only 45 minutes east of Ottawa / 60
                 minutes west of Montreal
               </h2>
-              <p>
-                Located in Alfred, Ontario with multiple indoor barns for RVs,
-                cars and sleds, plus drive-through lanes and an outdoor yard
-                poured in concrete. The same family that runs Colle Farm
+              <p data-i18n="facility.description">
+                Located in Alfred, Ontario with multiple indoor warehouses for
+                RVs, cars and sleds, plus drive-through lanes and an outdoor
+                yard poured in concrete. The same family that runs Ferme Colle
                 oversees every check-in.
               </p>
             </header>
@@ -143,10 +177,10 @@
                   alt="Indoor bay with RVs and a pickup truck"
                   loading="lazy"
                 />
-                <h3>Indoor barn bays</h3>
-                <p>
-                  Non-heated barns with 20 ft clearance keep vehicles dry and
-                  away from UV exposure.
+                <h3 data-i18n="facility.indoor.title">Indoor warehouse bays</h3>
+                <p data-i18n="facility.indoor.body">
+                  Non-heated warehouse bays with 20 ft clearance keep vehicles
+                  dry and away from UV exposure.
                 </p>
               </article>
               <article>
@@ -155,8 +189,10 @@
                   alt="Outdoor yard"
                   loading="lazy"
                 />
-                <h3>Concrete outdoor pads</h3>
-                <p>
+                <h3 data-i18n="facility.outdoor.title">
+                  Concrete outdoor pads
+                </h3>
+                <p data-i18n="facility.outdoor.body">
                   Outdoor RV pads are poured concrete, ideal for RVs up to 30 ft
                   with rear access.
                 </p>
@@ -164,17 +200,24 @@
               <article>
                 <div class="facility__list">
                   <ul>
-                    <li>
+                    <li data-i18n="facility.details.deposits">
                       Deposits: $100 when the estimate exceeds $250, otherwise
                       $50.
                     </li>
-                    <li>Battery disconnect and intelligent charger service is available for most vehicles.</li>
-                    <li>
+                    <li data-i18n="facility.details.battery">
+                      Battery disconnect and intelligent charger service is
+                      available for most vehicles.
+                    </li>
+                    <li data-i18n="facility.details.appointments">
                       Drop-off appointments coordinated 2 days (winter) or 7
                       days (summer) ahead.
                     </li>
-                    <li>Payments accepted via bank transfer or cash.</li>
-                    <li>Personal insurance required while stored on site.</li>
+                    <li data-i18n="facility.details.payments">
+                      Payments accepted via bank transfer or cash.
+                    </li>
+                    <li data-i18n="facility.details.insurance">
+                      Personal insurance required while stored on site.
+                    </li>
                   </ul>
                 </div>
               </article>
@@ -183,25 +226,33 @@
 
           <section id="seasons" class="section">
             <header>
-              <p class="eyebrow">Seasonal plans</p>
-              <h2>Pick the season that matches your storage window</h2>
+              <p class="eyebrow" data-i18n="seasonSection.eyebrow">
+                Seasonal plans
+              </p>
+              <h2 data-i18n="seasonSection.heading">
+                Pick the season that matches your storage window
+              </h2>
             </header>
             <div class="season-grid" id="season-grid"></div>
           </section>
 
           <section class="section services">
             <header>
-              <p class="eyebrow">Add-on services</p>
-              <h2>Keep essentials onsite so pickup day is effortless</h2>
-              <p>
+              <p class="eyebrow" data-i18n="services.eyebrow">
+                Add-on services
+              </p>
+              <h2 data-i18n="services.heading">
+                Keep essentials onsite so pickup day is effortless
+              </h2>
+              <p data-i18n="services.description">
                 Select any add-on when you schedule your drop-off—each service
                 is billed with your storage balance.
               </p>
             </header>
             <div class="services__grid">
               <article>
-                <h3>Battery maintenance</h3>
-                <p>
+                <h3 data-i18n="services.battery.title">Battery maintenance</h3>
+                <p data-i18n-html="true" data-i18n="services.battery.body">
                   Intelligent chargers keep your battery topped up and
                   conditioned while the vehicle is parked indoors. Battery
                   disconnect and intelligent charger service is available for
@@ -209,8 +260,8 @@
                 </p>
               </article>
               <article>
-                <h3>Propane tank storage</h3>
-                <p>
+                <h3 data-i18n="services.propane.title">Propane tank storage</h3>
+                <p data-i18n-html="true" data-i18n="services.propane.body">
                   Drop your propane tank at check-in and we store it separately
                   in our ventilated cage so your RV can stay on site. Flat
                   <strong><span data-service-price="propane"></span></strong>
@@ -222,22 +273,25 @@
 
           <section id="contract" class="section contract">
             <header>
-              <p class="eyebrow">Contracts &amp; deposits</p>
-              <h2>
+              <p class="eyebrow" data-i18n="contractSection.eyebrow">
+                Contracts &amp; deposits
+              </p>
+              <h2 data-i18n="contractSection.heading">
                 Download the storage agreement or auto-fill one in seconds
               </h2>
-              <p>
+              <p data-i18n="contractSection.description">
                 Start with our standard PDF or use our smart contract helper to
                 generate a draft that already includes your vehicle info.
               </p>
             </header>
             <div class="contract__grid">
               <article class="contract-standard">
-                <h3>Standard paperwork</h3>
-                <p>
+                <h3 data-i18n="contractStandard.title">Standard paperwork</h3>
+                <p data-i18n-html="true" data-i18n="contractStandard.body">
                   Always available and bilingual. Use the fillable PDF form,
                   sign digitally or by hand, and email it to
-                  <a href="mailto:storage@as-colle.com">storage@as-colle.com</a
+                  <a href="mailto:storage@as-colle.com" data-contact-email
+                    >storage@as-colle.com</a
                   >. Once our team validates the information, they will reach
                   out for a deposit to reserve your spot.
                 </p>
@@ -251,12 +305,15 @@
                 </figure>
                 <a
                   class="button button--primary"
-                  href="./static/documents/storage-contract-template-d848.pdf"
+                  href="./static/documents/contract-en.pdf"
+                  data-contract-download
                   download
                 >
-                  Download blank contract
+                  <span data-i18n="contractStandard.button"
+                    >Download blank contract</span
+                  >
                 </a>
-                <p class="contract__mobile-note">
+                <p class="contract__mobile-note" data-i18n="contractStandard.mobileNote">
                   On phones, download the bilingual PDF and send it in once
                   completed. The smart helper is available on tablets and
                   desktops.
@@ -268,37 +325,55 @@
                 </p-->
               </article>
               <article class="contract-helper">
-                <h3>Smart contract helper</h3>
+                <h3 data-i18n="contractHelper.title">Smart contract helper</h3>
                 <form id="contract-helper">
                   <div class="form-steps-nav">
-                    <button type="button" data-step-target="1" class="active">
+                    <button
+                      type="button"
+                      data-step-target="1"
+                      class="active"
+                      data-i18n="form.steps.tenant"
+                    >
                       1. Tenant
                     </button>
-                    <button type="button" data-step-target="2">
+                    <button
+                      type="button"
+                      data-step-target="2"
+                      data-i18n="form.steps.vehicle"
+                    >
                       2. Vehicle
                     </button>
-                    <button type="button" data-step-target="3">
+                    <button
+                      type="button"
+                      data-step-target="3"
+                      data-i18n="form.steps.insurance"
+                    >
                       3. Insurance &amp; add-ons
                     </button>
-                    <button type="button" data-step-target="4">
+                    <button
+                      type="button"
+                      data-step-target="4"
+                      data-i18n="form.steps.review"
+                    >
                       4. Review &amp; submit
                     </button>
                   </div>
                   <div class="form-step active" data-step="1">
                     <label>
-                      Season
+                      <span data-i18n="form.season.label">Season</span>
                       <select name="season" required>
-                        <option value="" selected disabled>
+                        <option
+                          value=""
+                          selected
+                          disabled
+                          data-i18n="form.selectPrompt"
+                        >
                           -- Please select one --
                         </option>
-                        <option value="Winter 2026-2027">
-                          Winter 2026-2027
-                        </option>
-                        <option value="Summer 2026">Summer 2026</option>
                       </select>
                     </label>
                     <label>
-                      Full name
+                      <span data-i18n="form.fullName.label">Full name</span>
                       <input
                         type="text"
                         name="tenantName"
@@ -308,7 +383,7 @@
                     </label>
                     <div class="form-row form-row--two form-row--phone-email">
                       <label class="grid-2">
-                        Phone
+                        <span data-i18n="form.phone.label">Phone</span>
                         <input
                           type="tel"
                           name="tenantPhone"
@@ -317,7 +392,7 @@
                         />
                       </label>
                       <label class="grid-2">
-                        Email
+                        <span data-i18n="form.email.label">Email</span>
                         <input
                           type="email"
                           name="tenantEmail"
@@ -325,8 +400,10 @@
                         />
                       </label>
                     </div>
-                    <label>
-                      Mailing address
+                    <label class="form-field--full">
+                      <span data-i18n="form.address.label"
+                        >Mailing address</span
+                      >
                       <input
                         type="text"
                         name="tenantAddress"
@@ -336,7 +413,7 @@
                     </label>
                     <div class="form-row form-row--city-block">
                       <label class="grid-2">
-                        City
+                        <span data-i18n="form.city.label">City</span>
                         <input
                           type="text"
                           name="tenantCity"
@@ -345,7 +422,7 @@
                         />
                       </label>
                       <label class="grid-2 postal-field">
-                        Postal code
+                        <span data-i18n="form.postal.label">Postal code</span>
                         <input
                           type="text"
                           name="tenantPostal"
@@ -355,7 +432,7 @@
                         />
                       </label>
                       <label class="grid-2 province-field">
-                        Province
+                        <span data-i18n="form.province.label">Province</span>
                         <select
                           name="tenantProvince"
                           autocomplete="section-tenant address-level1"
@@ -371,49 +448,56 @@
                     </div>
                   </div>
                   <div class="form-step" data-step="2">
+                    <button
+                      type="button"
+                      class="button button--ghost button--sm contract-reset"
+                      data-reset-vehicle
+                      data-i18n="form.resetVehicle"
+                    >
+                      Clear saved vehicle data
+                    </button>
                     <label>
-                      Vehicle type
+                      <span data-i18n="form.vehicleType.label"
+                        >Vehicle type</span
+                      >
                       <select
                         name="vehicleType"
                         id="vehicle-type-select"
                         required
                       >
-                        <option value="" selected disabled>
+                        <option
+                          value=""
+                          selected
+                          disabled
+                          data-i18n="form.selectPrompt"
+                        >
                           -- Please select one --
                         </option>
-                        <option value="RV/Motorhome">RV/Motorhome</option>
-                        <option value="Car">Car</option>
-                        <option value="Truck">Truck</option>
-                        <option value="Motorcycle">Motorcycle</option>
-                        <option value="Can-Am Spyder">Can-Am Spyder</option>
-                        <option value="Snowmobile">Snowmobile</option>
-                        <option value="Snowmobile + single trailer">
-                          Snowmobile + single trailer
-                        </option>
-                        <option value="Other">Other</option>
                       </select>
                     </label>
                     <label id="vehicle-type-other" class="hidden">
-                      Please specify
+                      <span data-i18n="form.vehicleType.other"
+                        >Please specify</span
+                      >
                       <input type="text" name="vehicleTypeOther" />
                     </label>
                     <div class="form-row form-row--vehicle">
                       <label class="grid-2">
-                        Brand
+                        <span data-i18n="form.brand.label">Brand</span>
                         <input type="text" name="vehicleBrand" />
                       </label>
                       <label class="grid-2">
-                        Model
+                        <span data-i18n="form.model.label">Model</span>
                         <input type="text" name="vehicleModel" />
                       </label>
                     </div>
                     <div class="form-row form-row--vehicle form-row--vehicle-triple">
                       <label class="grid-2">
-                        Colour
+                        <span data-i18n="form.colour.label">Colour</span>
                         <input type="text" name="vehicleColour" />
                       </label>
                       <label class="grid-2">
-                        Length (ft)
+                        <span data-i18n="form.length.label">Length (ft)</span>
                         <input
                           type="number"
                           name="vehicleLength"
@@ -422,12 +506,13 @@
                         />
                       </label>
                       <label class="grid-2 vehicle-year">
-                        Year
+                        <span data-i18n="form.year.label">Year</span>
                         <input
                           type="number"
                           name="vehicleYear"
                           min="1950"
                           max="2050"
+                          value="2020"
                           required
                           inputmode="numeric"
                         />
@@ -435,7 +520,7 @@
                     </div>
                     <div class="form-row form-row--vehicle">
                       <label class="grid-2">
-                        Plate
+                        <span data-i18n="form.plate.label">Plate</span>
                         <input
                           type="text"
                           name="vehiclePlate"
@@ -443,9 +528,16 @@
                         />
                       </label>
                       <label class="grid-2">
-                        Province
+                        <span data-i18n="form.vehicleProvince.label"
+                          >Province</span
+                        >
                         <select name="vehicleProv" required>
-                          <option value="" selected disabled>
+                          <option
+                            value=""
+                            selected
+                            disabled
+                            data-i18n="form.selectPrompt"
+                          >
                             -- Please select one --
                           </option>
                           <option value="ON">Ontario (ON)</option>
@@ -455,31 +547,49 @@
                     </div>
                   </div>
                   <div class="form-step" data-step="3">
-                    <label>
-                      Insurance company
+                    <label class="form-field--full">
+                      <span data-i18n="form.insuranceCompany.label"
+                        >Insurance company</span
+                      >
                       <input type="text" name="insuranceCompany" />
                     </label>
-                    <label class="grid-2">
-                      Policy number
+                    <div class="form-row form-row--two">
+                      <label>
+                      <span data-i18n="form.policyNumber.label"
+                        >Policy number</span
+                      >
                       <input type="text" name="insurancePolicy" />
                     </label>
-                    <label class="grid-2">
-                      Expiration
+                      <label>
+                      <span data-i18n="form.expiration.label"
+                        >Expiration</span
+                      >
                       <input type="date" name="insuranceExpiration" />
                     </label>
+                    </div>
                     <div class="form-divider" aria-hidden="true"></div>
+                    <p class="form-addons-title" data-i18n="form.addons.title">
+                      Add-on services
+                    </p>
                     <label class="checkbox">
                       <input type="checkbox" name="battery" value="yes" />
-                      Battery charging service
+                      <span data-i18n="form.service.battery"
+                        >Battery charging service</span
+                      >
                     </label>
                     <label class="checkbox">
                       <input type="checkbox" name="propane" value="yes" />
-                      Propane tank storage
+                      <span data-i18n="form.service.propane"
+                        >Propane tank storage</span
+                      >
                     </label>
                   </div>
                   <div class="form-step" data-step="4">
-                    <label class="grid-2">
-                      Deposit ($) — auto: $100 if estimate > $250, else $50
+                    <label class="form-field--full">
+                      <span data-i18n="form.deposit.label"
+                        >Deposit ($) — auto: $100 if estimate &gt; $250, else
+                        $50</span
+                      >
                       <input
                         type="number"
                         name="deposit"
@@ -489,36 +599,46 @@
                         readonly
                       />
                     </label>
-                    <label class="grid-2">
-                      Lease duration
+                    <label class="form-field--full">
+                      <span data-i18n="form.leaseDuration.label"
+                        >Lease duration</span
+                      >
                       <input
                         type="text"
                         name="leaseDuration"
                         readonly
-                        placeholder="Completed by Colle Storage"
+                        placeholder="Completed by Ferme Colle"
+                        data-i18n="form.completedPlaceholder"
+                        data-i18n-attr="placeholder"
                       />
                     </label>
-                    <label class="grid-2">
-                      Estimated rental cost
+                    <label class="form-field--full">
+                      <span data-i18n="form.leaseCost.label"
+                        >Estimated rental cost</span
+                      >
                       <input
                         type="text"
                         name="leaseCost"
                         readonly
-                        placeholder="Completed by Colle Storage"
+                        placeholder="Completed by Ferme Colle"
+                        data-i18n="form.completedPlaceholder"
+                        data-i18n-attr="placeholder"
                       />
                     </label>
-                    <label>
-                      Notes
-                      <textarea
-                        name="notes"
-                        rows="3"
-                        placeholder="Add extra drivers, storage requests or bank transfer info"
-                      ></textarea>
-                    </label>
-                    <button class="button button--primary" type="submit">
-                      Preview PDF
-                    </button>
-                    <p class="contract__hint">
+                    <div class="form-row form-row--full">
+                      <button
+                        class="button button--primary"
+                        type="submit"
+                        data-i18n="form.preview"
+                      >
+                        Preview PDF
+                      </button>
+                    </div>
+                    <p
+                      class="contract__hint"
+                      data-i18n-html="true"
+                      data-i18n="form.previewHint"
+                    >
                       Powered by <code>pdf-lib</code>. The draft PDF opens
                       locally and never leaves your browser.
                     </p>
@@ -528,6 +648,7 @@
                     type="button"
                     class="button button--ghost"
                     data-step-prev
+                    data-i18n="form.back"
                   >
                     Back
                   </button>
@@ -535,6 +656,7 @@
                     type="button"
                     class="button button--primary"
                     data-step-next
+                    data-i18n="form.next"
                   >
                     Next
                   </button>
@@ -546,39 +668,50 @@
 
           <section class="section info">
             <header>
-              <p class="eyebrow">Storage rules</p>
-              <h2>Simple guardrails keep everyone on schedule</h2>
+              <p class="eyebrow" data-i18n="infoSection.eyebrow">
+                Storage rules
+              </p>
+              <h2 data-i18n="infoSection.heading">
+                Simple guardrails keep everyone on schedule
+              </h2>
             </header>
             <div class="info__grid" id="storage-rules"></div>
           </section>
 
           <section id="contact" class="section contact">
             <header>
-              <p class="eyebrow">Ready to store?</p>
-              <h2>
-                Call, email or send the form—everything routes to our professional team
+              <p class="eyebrow" data-i18n="contactSection.eyebrow">
+                Ready to store?
+              </p>
+              <h2 data-i18n="contactSection.heading">
+                Call, email or send the form—everything routes to our
+                professional team
               </h2>
             </header>
             <div class="contact__grid">
               <article>
-                <h3>Talk to us</h3>
-                <p>
+                <h3 data-i18n="contactSection.talkTitle">Talk to us</h3>
+                <p
+                  data-i18n-html="true"
+                  data-i18n="contactSection.talkBodyPrimary"
+                >
                   Phone: <a href="tel:514-627-5377">514-627-5377</a><br />
                   Email:
-                  <a href="mailto:storage@as-colle.com">storage@as-colle.com</a
+                  <a href="mailto:storage@as-colle.com" data-contact-email
+                    >storage@as-colle.com</a
                   ><br />
                   Site: Conc 4, Alfred, ON K0B 1A0
                 </p>
-                <p>
+                <p data-i18n="contactSection.talkBodySecondary">
                   We are 60 minutes from Montréal and 45 minutes from Ottawa.
                   Drop-offs are by appointment to keep traffic moving.
                 </p>
               </article>
               <article>
-                <h3>Email shortcut</h3>
+                <h3 data-i18n="contactSection.formTitle">Email shortcut</h3>
                 <form id="contact-form">
                   <label>
-                    Your name
+                    <span data-i18n="contactForm.name.label">Your name</span>
                     <input
                       type="text"
                       name="name"
@@ -587,7 +720,7 @@
                     />
                   </label>
                   <label>
-                    Email
+                    <span data-i18n="contactForm.email.label">Email</span>
                     <input
                       type="email"
                       name="email"
@@ -596,23 +729,31 @@
                     />
                   </label>
                   <label>
-                    Vehicle type
+                    <span data-i18n="contactForm.vehicle.label"
+                      >Vehicle type</span
+                    >
                     <input type="text" name="vehicle" />
                   </label>
                   <label>
-                    Message
+                    <span data-i18n="contactForm.message.label">Message</span>
                     <textarea
                       name="message"
                       rows="4"
                       required
                       placeholder="Tell us what you need stored & your ideal drop-off date"
+                      data-i18n="contactForm.message.placeholder"
+                      data-i18n-attr="placeholder"
                     ></textarea>
                   </label>
-                  <button type="submit" class="button button--ghost">
+                  <button
+                    type="submit"
+                    class="button button--ghost"
+                    data-i18n="contactForm.submit"
+                  >
                     Compose email
                   </button>
                 </form>
-                <p class="contract__hint">
+                <p class="contract__hint" data-i18n="contactForm.hint">
                   Submitting opens a ready-to-send email so nothing gets lost.
                 </p>
               </article>
@@ -636,9 +777,11 @@
     >
       <header class="contract-modal__header">
         <div>
-          <p class="eyebrow">Preview &amp; export</p>
-          <h3 id="contract-preview-title">Contract preview</h3>
-          <p id="contract-preview-status">
+          <p class="eyebrow" data-i18n="modal.eyebrow">Preview &amp; export</p>
+          <h3 id="contract-preview-title" data-i18n="modal.title">
+            Contract preview
+          </h3>
+          <p id="contract-preview-status" data-i18n="modal.status">
             Generate a preview to review details before exporting.
           </p>
         </div>
@@ -647,6 +790,8 @@
           class="contract-modal__close"
           data-preview-close
           aria-label="Close preview"
+          data-i18n="modal.close"
+          data-i18n-attr="aria-label"
         >
           &times;
         </button>
@@ -654,13 +799,18 @@
       <div class="contract-modal__actions">
         <div class="contract-modal__hint">
           <p>
-            Once signed, email the contract to
-            <a href="mailto:storage@as-colle.com">storage@as-colle.com</a>.
+            <span data-i18n-html="true" data-i18n="modal.instructionsText">
+              Once signed, email the contract to
+            <a href="mailto:storage@as-colle.com" data-contact-email>
+              storage@as-colle.com</a>.
+            </span>
             <button
               type="button"
               class="contract-modal__hint-info"
               aria-label="Signing instructions"
               data-signing-info-trigger
+              data-i18n="modal.signingLabel"
+              data-i18n-attr="aria-label"
             >
               ?
             </button>
@@ -671,11 +821,19 @@
             data-signing-info
             hidden
           >
-            <p>Recommended ways to complete the signature:</p>
+            <p data-i18n="modal.signingTitle">
+              Recommended ways to complete the signature:
+            </p>
             <ul>
-              <li>Sign digitally in a PDF app such as Adobe Acrobat</li>
-              <li>Print, sign, scan and email the file</li>
-              <li>Use any signing process your organization prefers</li>
+              <li data-i18n="modal.signingOption1">
+                Sign digitally in a PDF app such as Adobe Acrobat
+              </li>
+              <li data-i18n="modal.signingOption2">
+                Print, sign, scan and email the file
+              </li>
+              <li data-i18n="modal.signingOption3">
+                Use any signing process your organization prefers
+              </li>
             </ul>
           </div>
         </div>
@@ -684,6 +842,7 @@
           class="button button--ghost"
           data-preview-download
           disabled
+          data-i18n="modal.download"
         >
           Download PDF
         </button>
@@ -700,7 +859,9 @@
         <div class="left"></div>
         <div class="center footer__inner">
           <div>
-            <span class="container_title">Address</span>
+            <span class="container_title" data-i18n="footer.address"
+              >Address</span
+            >
             <p>
               Conc 4<br />
               Alfred, Ontario<br />
@@ -708,14 +869,19 @@
             </p>
           </div>
           <div>
-            <span class="container_title">Bookings</span>
+            <span class="container_title" data-i18n="footer.bookings"
+              >Bookings</span
+            >
             <p>
               <a href="tel:514-627-5377">514-627-5377</a><br />
-              <a href="mailto:storage@as-colle.com">storage@as-colle.com</a>
+              <a href="mailto:storage@as-colle.com" data-contact-email>
+                storage@as-colle.com</a>
             </p>
           </div>
           <div>
-            <span class="container_title">Office</span>
+            <span class="container_title" data-i18n="footer.office"
+              >Office</span
+            >
             <p>Ferme Colle • 276 rue Dolbec, St-Eustache, QC J7R 6N5</p>
           </div>
         </div>
