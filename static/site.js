@@ -674,11 +674,6 @@ const I18N = {
   },
   "form.back": { en: "Back", fr: "Retour" },
   "form.next": { en: "Next", fr: "Suivant" },
-  "infoSection.eyebrow": { en: "Storage rules", fr: "Règles d’entreposage" },
-  "infoSection.heading": {
-    en: "Simple guardrails keep everyone on schedule",
-    fr: "Quelques règles simples pour rester dans les délais",
-  },
   "contactSection.eyebrow": { en: "Ready to store?", fr: "Prêt à entreposer?" },
   "contactSection.heading": {
     en: "Call, email or send the form—everything routes to our professional team",
@@ -834,24 +829,6 @@ const findSeasonByLabel = (label = "") => {
   });
 };
 
-const STORAGE_RULE_GROUPS = [
-  {
-    id: "winter",
-    title: SEASON_LOOKUP.winter.ruleTitle,
-    policies: () => SEASON_LOOKUP.winter.policies,
-  },
-  {
-    id: "summer",
-    title: SEASON_LOOKUP.summer.ruleTitle,
-    policies: () => SEASON_LOOKUP.summer.policies,
-  },
-  {
-    id: "shared",
-    title: SHARED_POLICY_CARD.ruleTitle,
-    policies: () => SHARED_POLICY_CARD.policies,
-  },
-];
-
 const offerRequiresLength = (offer) => {
   if (!offer) return false;
   if (offer.price?.mode === "perFoot") return true;
@@ -964,7 +941,6 @@ const formatOfferNote = (offer, lang = currentLanguage) => {
 
 
 const seasonGridEl = document.getElementById("season-grid");
-const storageRulesEl = document.getElementById("storage-rules");
 const servicePriceEls = document.querySelectorAll("[data-service-price]");
 const contractDownloadLink = document.querySelector("[data-contract-download]");
 
@@ -1033,29 +1009,6 @@ const buildSeasonCards = () => {
     });
     card.appendChild(list);
     seasonGridEl.appendChild(card);
-  });
-};
-
-const buildStorageRules = () => {
-  if (!storageRulesEl) return;
-  storageRulesEl.innerHTML = "";
-
-  STORAGE_RULE_GROUPS.forEach((group) => {
-    const article = document.createElement("article");
-    const heading = document.createElement("h3");
-    heading.textContent = getLocalizedText(group.title);
-    const list = document.createElement("ul");
-
-    const items = typeof group.policies === "function" ? group.policies() : [];
-    items.forEach((item) => {
-      const li = document.createElement("li");
-      li.textContent = getLocalizedText(item);
-      list.appendChild(li);
-    });
-
-    article.appendChild(heading);
-    article.appendChild(list);
-    storageRulesEl.appendChild(article);
   });
 };
 
@@ -1900,7 +1853,6 @@ const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
   }
   applyTranslationsForLanguage(currentLanguage);
   buildSeasonCards();
-  buildStorageRules();
   populateServicePrices();
   updateContractDownloadLink();
   updateContactEmails();
