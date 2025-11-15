@@ -87,6 +87,29 @@ const getVehicleStorageKey = (type) => {
   return `${CONTRACT_FORM_MEMORY_PREFIX}${type}`;
 };
 
+const clearLanguageIndicators = () => {
+  if (typeof window === "undefined" || !window.history?.replaceState) return;
+  try {
+    const url = new URL(window.location.href);
+    let changed = false;
+    if (url.searchParams.has("lang")) {
+      url.searchParams.delete("lang");
+      changed = true;
+    }
+    if (url.hash) {
+      const hashValue = url.hash.replace(/^#/, "").toLowerCase();
+      if (SUPPORTED_LANGUAGES.includes(hashValue)) {
+        url.hash = "";
+        changed = true;
+      }
+    }
+    if (changed) {
+      const newUrl = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+  } catch (err) {}
+};
+
 
 const formatCurrency = (value, lang = currentLanguage, options = {}) => {
   const num = Number(value);
@@ -1864,14 +1887,6 @@ const updateLanguageToggleState = () => {
   });
 };
 
-const syncUrlLanguageParam = (lang) => {
-  if (!window.history || !window.URLSearchParams) return;
-  const url = new URL(window.location.href);
-  if (url.searchParams.get("lang") === lang) return;
-  url.searchParams.set("lang", lang);
-  window.history.replaceState({}, "", url.toString());
-};
-
 const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
   const normalized = SUPPORTED_LANGUAGES.includes(lang)
     ? lang
@@ -1892,7 +1907,7 @@ const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
   syncContractHelperLanguage();
   updateLanguageToggleState();
   if (!skipUrlSync) {
-    syncUrlLanguageParam(currentLanguage);
+    clearLanguageIndicators();
   }
 };
 
@@ -1951,14 +1966,16 @@ document.addEventListener("DOMContentLoaded", () => {
   initFormStepper();
   handleContactForm();
   handleContractHelper();
-  const urlLanguage = getLanguageFromUrl();
+  const urlLanguageRaw = getLanguageFromUrl();
   const storedLanguage = getStoredLanguage();
+  const urlLanguage = storedLanguage ? null : urlLanguageRaw;
   const hostLanguage = getLanguageFromHostname();
   const initialLanguage =
-    urlLanguage || storedLanguage || hostLanguage || DEFAULT_LANGUAGE;
+    storedLanguage || urlLanguage || hostLanguage || DEFAULT_LANGUAGE;
+  clearLanguageIndicators();
   applyLanguage(initialLanguage, {
-    skipPersist: Boolean(urlLanguage),
-    skipUrlSync: Boolean(urlLanguage || hostLanguage),
+    skipPersist: !urlLanguage,
+    skipUrlSync: Boolean(urlLanguageRaw || hostLanguage),
   });
   initLanguageToggle();
 });
