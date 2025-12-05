@@ -189,10 +189,6 @@ const SEASON_DEFINITIONS = [
     duration: { en: "16 Oct 2026 to 25 Apr 2027", fr: "16 oct. 2026 au 25 avr. 2027" },
     dropoffWindow: { en: "16 Oct to 1 Nov 2026", fr: "16 oct. au 1er nov. 2026" },
     pickupDeadline: { en: "25 Apr 2027", fr: "25 avr. 2027" },
-    deposit: {
-      en: "$100 if estimate exceeds $250 • $50 otherwise",
-      fr: "100 $ si l’estimation dépasse 250 $, sinon 50 $",
-    },
     description: {
       en: "Indoor warehouses and outdoor concrete pads suited for RVs, cars, motorcycles and Spyder units.",
       fr: "Des entrepôts intérieurs et des dalles extérieures idéales pour VR, voitures, motos et Spyder.",
@@ -294,15 +290,11 @@ const SEASON_DEFINITIONS = [
     policies: [
       {
         en: "Drop-off window: 16 Oct – 1 Nov 2026.",
-        fr: "Période de dépôt : 16 oct. au 1 nov. 2026.",
+        fr: "Période de remisage : 16 oct. au 1 nov. 2026."
       },
       {
-        en: "Pick-up deadline: 25 Apr 2027 (late fee $5/day).",
-        fr: "Sortie au plus tard le 25 avr. 2027 (5 $/jour de retard).",
-      },
-      {
-        en: "Give us 48 hours notice before winter drop-offs or pickups so we can stage your bay.",
-        fr: "Prévoyez 48 heures d’avis pour les dépôts ou sorties d’hiver afin que nous préparions votre baie.",
+        en: "Pick-up window: 15 Apr – 25 Oct 2027.",
+        fr: "Fenêtre de déremisage : 15 avr. au 25 oct. 2027.",
       },
     ],
   },
@@ -314,10 +306,6 @@ const SEASON_DEFINITIONS = [
     duration: { en: "2 May 2026 to 9 Oct 2026", fr: "2 mai 2026 au 9 oct. 2026" },
     dropoffWindow: { en: "2 May 2026", fr: "2 mai 2026" },
     pickupDeadline: { en: "9 Oct 2026", fr: "9 oct. 2026" },
-    deposit: {
-      en: "$100 if estimate exceeds $250 • $50 otherwise",
-      fr: "100 $ si l’estimation dépasse 250 $, sinon 50 $",
-    },
     description: {
       en: "Indoor non-heated bays sized for compact cars and snowmobiles with trailer parking.",
       fr: "Des baies non chauffées conçues pour les voitures compactes et les motoneiges avec espace pour les remorques.",
@@ -401,16 +389,12 @@ const SEASON_DEFINITIONS = [
     ],
     policies: [
       {
-        en: "Season: 2 May – 9 Oct 2026.",
-        fr: "Saison : 2 mai au 9 oct. 2026.",
+        en: "Drop-off window: 2 May  –  May 9 2026.",
+        fr: "Période de remisage : 2 mai au 9 mai 2026.",
       },
       {
-        en: "Pick-up appointments booked 7 days in advance.",
-        fr: "Les rendez-vous de sortie se prennent 7 jours d’avance.",
-      },
-      {
-        en: "Plan your own battery disconnect unless you add the Ferme Colle service.",
-        fr: "Prévoyez débrancher votre batterie à moins d’ajouter le service Ferme Colle.",
+        en: "Pick-up window: 3 Oct – 11 Oct 2026.",
+        fr: "Fenêtre de déremisage : 3 oct. au 11 oct. 2026.",
       },
     ],
   },
@@ -418,32 +402,54 @@ const SEASON_DEFINITIONS = [
 
 const SHARED_POLICY_CARD = {
   id: "shared",
-  name: { en: "Access & maintenance", fr: "Accès et entretien" },
+  name: {
+    en: "Access, maintenance & conditions",
+    fr: "Accès, entretien et conditions",
+  },
   seasonLabel: {
     en: "Applies to every booking",
     fr: "S’applique à toutes les réservations",
   },
   description: {
-    en: "Propane, payment, deposit and access rules that cover both indoor and outdoor storage.",
-    fr: "Règles sur le propane, les paiements, les dépôts et l’accès pour tout type d’entreposage.",
+    en: "Propane, payment, deposit and access conditions that cover both indoor and outdoor storage.",
+    fr: "Règles sur les réservoirs de propane/d’essence, les paiements, les dépôts et les conditions d’accès pour tout type d’entreposage.",
   },
-  ruleTitle: { en: "Access & maintenance", fr: "Accès et entretien" },
+  ruleTitle: {
+    en: "Access, maintenance & conditions",
+    fr: "Accès, entretien et conditions",
+  },
   policies: [
+    {
+      en: "Deposit per vehicle: $100 when the estimate exceeds $250, otherwise $50; bookings are held only once the deposit is received.",
+      fr: "Dépôt par véhicule : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $; la réservation est confirmée seulement après réception du dépôt.",
+    },
+    {
+      en: "Payment due on arrival via bank transfer or cash.",
+      fr: "Paiement à l’arrivée par virement bancaire ou en argent.",
+    },
+    {
+      en: "You must keep personal insurance active for the entire storage period and renew it before the pickup date if it expires.",
+      fr: "Vous devez maintenir une assurance personnelle active pendant toute la période d’entreposage et la renouveler avant la date de sortie si elle expire.",
+    },
+    {
+      en: "Drop-offs or pickups outside the assigned window incur a $30 handling fee; pickups past the deadline add $5 per day until collected.",
+      fr: "Les remisage ou déremisage hors fenêtre assignée entraînent des frais fixes de 30 $; les déremisage après la date limite ajoutent 5 $ par jour tant que le véhicule n’est pas récupéré.",
+    },
     (lang) =>
       lang === "fr"
-        ? `Retirez le propane avant l’entreposage ou utilisez notre service de bonbonne à ${formatCurrency(SERVICE_PRICES.propane, lang)} pour respecter les normes des entrepôts.`
-        : `Remove propane before storage or use our ${formatCurrency(SERVICE_PRICES.propane, lang)} propane tank service so we can keep warehouses compliant.`,
+        ? `Tout réservoir de propane et d’essence doit être retiré du véhicule avant l’entreposage intérieur pour respecter les normes. Nous offrons un service d’entreposage de bonbonnes à ${formatCurrency(SERVICE_PRICES.propane, lang)} (maximum de 2 par véhicule) dans un bâtiment dédié.`
+        : `Remove every propane or gasoline tank from the vehicle before indoor storage to meet warehouse standards. We offer a propane tank storage service at ${formatCurrency(SERVICE_PRICES.propane, lang)} (maximum 2 per vehicle) in a dedicated building.`,
     (lang) =>
       lang === "fr"
         ? `Le service de déconnexion et de charge intelligente est offert pour ${formatCurrency(SERVICE_PRICES.battery, lang)}; sinon, débranchez et apportez la batterie.`
         : `Battery disconnect and smart charging available for ${formatCurrency(SERVICE_PRICES.battery, lang)}, otherwise disconnect and take the battery with you.`,
     {
-      en: "Vehicles remain locked; access requests incur a handling fee.",
-      fr: "Les véhicules demeurent verrouillés; les accès sur demande entraînent des frais de manutention.",
+      en: "Drop-off and pickup appointments require 7 days notice so we can stage your bay.",
+      fr: "Les rendez-vous de rémisage/dérémisage se prennent 7 jours d’avance.",
     },
     {
-      en: "Payment due on arrival via bank transfer or cash. Personal insurance required.",
-      fr: "Paiement à l’arrivée par virement bancaire ou en argent. L’assurance personnelle est obligatoire.",
+      en: "No vehicle access is provided during storage; additional fees apply if we need to retrieve an item for you.",
+      fr: "Aucun accès au véhicule pendant l'entreposage. Des frais supplémentaires seront exigés si une intervention est nécessaire pour récupérer un objet.",
     },
     {
       en: "Deposits are non-refundable but transferable to another vehicle in the same season.",
@@ -480,8 +486,8 @@ const I18N = {
   "hero.ctaReserve": { en: "Reserve a spot", fr: "Réservez un espace" },
   "hero.ctaCall": { en: "Call 514-627-5377", fr: "Appelez le 514-627-5377" },
   "hero.caption": {
-    en: "Most vehicles stay indoors in 20 ft tall warehouses with monitored access.",
-    fr: "La majorité des véhicules demeurent dans des entrepôts de 20 pi surveillés en tout temps.",
+    en: "Vehicles are stored inside a secure, controlled area.",
+    fr: "Les véhicules sont entreposés dans une aire contrôlée sécurisée.",
   },
   "facility.eyebrow": { en: "Why Alfred?", fr: "Pourquoi Alfred?" },
   "facility.heading": {
@@ -505,20 +511,20 @@ const I18N = {
     fr: "Dalles extérieures en béton",
   },
   "facility.outdoor.body": {
-    en: "Outdoor RV pads are poured concrete, ideal for RVs up to 30 ft with rear access.",
-    fr: "Les dalles extérieures en béton accueillent les VR jusqu’à 30 pi avec accès arrière.",
+    en: "For economical storage, our concrete and gravel outdoor pads accommodate vehicles of every type.",
+    fr: "Pour des économies, nos dalles extérieures en béton et nos aires en gravier accueillent des véhicules de tous types.",
   },
   "facility.details.deposits": {
-    en: "Deposits: $100 when the estimate exceeds $250, otherwise $50.",
-    fr: "Dépôts : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $.",
+    en: "Deposit per vehicle: $100 when the estimate exceeds $250, otherwise $50.",
+    fr: "Dépôt par véhicule : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $.",
   },
   "facility.details.battery": {
     en: "Battery disconnect and intelligent charger service is available for most vehicles.",
     fr: "Le service de déconnexion et de charge intelligente de batterie est offert pour la majorité des véhicules.",
   },
   "facility.details.appointments": {
-    en: "Drop-off appointments coordinated 2 days (winter) or 7 days (summer) ahead.",
-    fr: "Les rendez-vous de dépôt sont coordonnés 2 jours à l’avance l’hiver ou 7 jours l’été.",
+    en: "Drop-off appointments coordinated 7 days in advance.",
+    fr: "Les rendez-vous de dépôt se coordonnent 7 jours à l’avance.",
   },
   "facility.details.payments": {
     en: "Payments accepted via bank transfer or cash.",
@@ -558,8 +564,8 @@ const I18N = {
     fr: "Entreposage de bonbonnes de propane",
   },
   "services.propane.body": {
-    en: `Drop your propane tank at check-in and we store it separately in our ventilated cage so your RV can stay on site. Flat <strong><span data-service-price="propane"></span></strong> per tank per season.`,
-    fr: `Déposez vos bonbonnes lors de l’arrivée et nous les rangeons dans une cage ventilée pour que votre VR demeure sur place. <strong><span data-service-price="propane"></span></strong> par bonbonne par saison.`,
+    en: `Drop your propane tank at check-in and we store it separately in a well ventilated location so your RV can stay on site. Flat <strong><span data-service-price="propane"></span></strong> per season. (max: 2 tank)`,
+    fr: `Déposez vos bonbonnes lors de l’arrivée et nous les rangeons dans un endroit bien ventilée pour que votre VR demeure sur place. <strong><span data-service-price="propane"></span></strong> par saison. (max: 2 bonbonne)`,
   },
   "contractSection.eyebrow": {
     en: "Contracts & deposits",
@@ -741,7 +747,6 @@ const I18N = {
   "footer.address": { en: "Address", fr: "Adresse" },
   "footer.bookings": { en: "Bookings", fr: "Réservations" },
   "footer.office": { en: "Office", fr: "Bureau" },
-  "seasonCard.depositLabel": { en: "Deposit", fr: "Dépôt" },
   "messages.contactForPricing": {
     en: "Ferme Colle will reach out with an estimate.",
     fr: "Ferme Colle vous contactera avec un devis.",
@@ -941,7 +946,6 @@ const formatOfferNote = (offer, lang = currentLanguage) => {
 
 
 const seasonGridEl = document.getElementById("season-grid");
-const servicePriceEls = document.querySelectorAll("[data-service-price]");
 const contractDownloadLink = document.querySelector("[data-contract-download]");
 
 const getContractTemplateUrl = (lang = currentLanguage) => {
@@ -965,15 +969,11 @@ const buildSeasonCards = () => {
     const timeframe = season.timeframe
       ? `<p><strong>${getLocalizedText(season.timeframe)}</strong></p>`
       : "";
-    const deposit = season.deposit
-      ? `<p>${getTranslation("seasonCard.depositLabel")}: ${getLocalizedText(season.deposit)}</p>`
-      : "";
     heading.innerHTML = `
             <p class="eyebrow">${getLocalizedText(season.seasonLabel)}</p>
             <h3>${getLocalizedText(season.name)}</h3>
             ${description}
             ${timeframe}
-            ${deposit}
         `;
 
     let table = null;
@@ -1399,6 +1399,7 @@ const initFormStepper = () => {
 };
 
 const populateServicePrices = () => {
+  const servicePriceEls = document.querySelectorAll("[data-service-price]");
   if (!servicePriceEls.length) return;
   servicePriceEls.forEach((el) => {
     const key = el.dataset.servicePrice;
