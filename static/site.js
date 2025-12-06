@@ -770,7 +770,7 @@ const I18N = {
   },
   "contactForm.upload.hint": {
     en: "Upload your signed contract, registration photo and insurance certificate for each vehicle. Files stay on this device until you press Send.",
-    fr: "Téléversez votre contrat signé, une photo de l’immatriculation et votre attestation d’assurance pour chaque véhicule. Les fichiers demeurent sur cet appareil jusqu’à l’envoi.",
+    fr: "Téléchargez votre contrat signé, une photo de l’immatriculation et votre attestation d’assurance pour chaque véhicule. Les fichiers demeurent sur cet appareil jusqu’à l’envoi.",
   },
   "contactForm.attachments.note": {
     en: "Requested documents",
