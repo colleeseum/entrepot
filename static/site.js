@@ -13,6 +13,8 @@ const SERVICE_PRICES = {
   propane: 25,
 };
 
+const INSURANCE_BUFFER_DAYS = 15;
+
 const SUPPORTED_LANGUAGES = ["en", "fr"];
 const DEFAULT_LANGUAGE = "en";
 const LANGUAGE_STORAGE_KEY = "ferme-colle-language";
@@ -68,6 +70,7 @@ const LENGTH_REQUIRED_TYPES = new Set([
 
 const CONTRACT_FORM_MEMORY_PREFIX = "contract-helper-vehicle-";
 const CONTRACT_FORM_MEMORY_FIELDS = [
+  "email",
   "vehicleType",
   "vehicleTypeOther",
   "vehicleBrand",
@@ -425,8 +428,8 @@ const SHARED_POLICY_CARD = {
       fr: "Dépôt par véhicule : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $; la réservation est confirmée seulement après réception du dépôt.",
     },
     {
-      en: "Remaining payment due on arrival via e-transfer or cash.",
-      fr: "Paiement final sera exigé à la date d’entrée par virement bancaire ou en argent.",
+      en: "Remaining payment due on arrival via e-transfer or cash, at which time an invoice will be provided.",
+      fr: "Paiement final sera exigé à la date d’entrée par virement bancaire ou en argent et une facture vous sera remise sur place.",
     },
     {
       en: "You must keep personal insurance active for the entire storage period and renew it before the pickup date if it expires.",
@@ -449,6 +452,10 @@ const SHARED_POLICY_CARD = {
       fr: "Vous devez prendre un rendez-vous au moins 7 jours à l'avance avant de déposer ou de récupérer votre véhicule.",
     },
     {
+      en: "If you arrive late to the reserved drop-off time, we may ask you to leave the vehicle in the staging area so we can park it later that day.",
+      fr: "Si vous arrivez en retard à l’heure de remisage prévue, nous pourrions vous demander de laisser votre véhicule dans la zone de mise en attente pour que nous le placions plus tard dans la journée.",
+    },
+    {
       en: "No vehicle access is provided during storage; additional fees apply if we need to retrieve an item for you.",
       fr: "Aucun accès au véhicule pendant l'entreposage. Des frais supplémentaires seront exigés si une intervention est nécessaire pour récupérer un objet.",
     },
@@ -457,8 +464,11 @@ const SHARED_POLICY_CARD = {
       fr: "Les dépôts sont non remboursables mais transférables à un autre véhicule de la même saison.",
     },
     {
-      en: "Tell us if your vehicle leaks oil so we can prep drip trays.",
-      fr: "Informez-nous si votre véhicule fuit pour que nous préparions des plateaux anti-gouttes.",
+      text: {
+        en: "Tell us if your vehicle leaks oil so we can plan drip trays—bring your own tray or we can provide one for an additional fee.",
+        fr: "Informez-nous si votre véhicule fuit huile afin que nous planifiions les plateaux anti-gouttes : apportez votre propre plateau ou nous pouvons en fournir un moyennant des frais supplémentaires.",
+      },
+      tooltipKey: "policies.oil.tooltip",
     },
   ],
 };
@@ -535,6 +545,40 @@ const I18N = {
     en: "Personal insurance required while stored on site.",
     fr: "Une assurance personnelle est requise pendant l’entreposage.",
   },
+  "etiquette.heading": { en: "Drop-off etiquette", fr: "Étiquette lors du remisage" },
+  "etiquette.intro": {
+    en: "Arrival days run smoothly when every vehicle is ready to roll straight into position—these quick reminders keep the line moving. Expect the process to take about 60 to 90 minutes end to end.",
+    fr: "Les journées de remisage se déroulent mieux lorsque chaque véhicule est prêt à être placé immédiatement; ces quelques rappels gardent la file en mouvement. Prévoyez que la procédure complète prenne idéalement entre 60 et 90 minutes.",
+  },
+  "etiquette.item.clean": {
+    en: "Arrive with the vehicle washed and the interior tidy so it is storage-ready the moment you check in.",
+    fr: "Présentez-vous avec un véhicule propre et l’intérieur dégagé afin qu’il soit prêt pour l’entreposage dès l’arrivée.",
+  },
+  "etiquette.item.propane": {
+    en: "If you are not using our propane service, remove and store your own tank before coming on site.",
+    fr: "Si vous n’utilisez pas notre service de bonbonnes, retirez et rangez votre réservoir vous-même avant de vous présenter.",
+  },
+  "etiquette.item.tires": {
+    en: "Verify tire pressure ahead of time so we can manoeuvre the unit safely inside the warehouse.",
+    fr: "Vérifiez la pression des pneus à l’avance pour que nous puissions manœuvrer votre véhicule en toute sécurité dans l’entrepôt.",
+  },
+  "etiquette.item.tarp": {
+    en: "Bring any blanket, cardboard or drip pad folded and clearly labelled if you want it placed under the vehicle. Tarps are not allowed.",
+    fr: "Apportez toute couverte, carton ou tapis plié et identifié si vous souhaitez qu’il soit installé sous le véhicule. Les bâches en plastique ne sont pas permises.",
+  },
+  "etiquette.tooltipLabel": {
+    en: "Why tarps are not allowed",
+    fr: "Pourquoi les bâches sont interdites",
+  },
+  "etiquette.tooltip.tarp": {
+    en: "Plastic tarps are not allowed on the floor because they trap moisture between the tarp and the concrete, which can lead to mold, odors, slippery conditions, and long-term damage to the building’s flooring. While this does not harm your vehicle, it does create problems for the facility. For that reason, we ask all customers to keep floors uncovered or use approved breathable or raised-surface mats that do not trap moisture.",
+    fr: "Les bâches en plastique sont interdites sur le plancher, car elles emprisonnent l’humidité entre la bâche et le béton, ce qui peut entraîner des moisissures, des odeurs, des surfaces glissantes et des dommages à long terme au revêtement du bâtiment. Même si cela n’endommage pas votre véhicule, cela cause des problèmes pour l’installation. Nous demandons donc à tous les clients de laisser le plancher dégagé ou d’utiliser des tapis respirants ou surélevés qui n’emprisonnent pas l’humidité.",
+  },
+  "policies.tooltipLabel": { en: "More details", fr: "Plus de détails" },
+  "policies.oil.tooltip": {
+    en: "Cleanup fees depend on the nature and size of the leak, so we confirm pricing once we inspect the vehicle. Any cleanup we handle is invoiced separately.",
+    fr: "Les frais de nettoyage varient selon la nature et l’ampleur de la fuite; nous confirmons donc le coût après inspection, et toute intervention effectuée est facturée séparément.",
+  },
   "seasonSection.eyebrow": {
     en: "Seasonal plans",
     fr: "Plans saisonniers",
@@ -577,24 +621,24 @@ const I18N = {
     fr: "Téléchargez le contrat ou remplissez-le automatiquement en quelques secondes",
   },
   "contractSection.description": {
-    en: "Start with our standard PDF or use our smart contract helper to generate a draft that already includes your vehicle info. For insurance purposes, submit one contract per vehicle.",
-    fr: "Utilisez notre PDF standard ou l’assistant intelligent pour générer un projet qui contient déjà les informations de votre véhicule. Pour des raisons d’assurance, un contrat distinct est requis par véhicule.",
+    en: "Choose the format that suits you best: the helper auto-fills your agreement, while the fillable PDF lets you work offline. For insurance purposes, submit one contract per vehicle.",
+    fr: "Choisissez le format qui vous convient : l’assistant remplit automatiquement votre contrat tandis que le PDF remplissable permet de travailler hors ligne. Pour des raisons d’assurance, un contrat distinct est requis par véhicule.",
   },
-  "contractStandard.title": {
-    en: "Standard paperwork",
-    fr: "Documents standards",
+  "contractHelper.intro": {
+    en: "Use the contract helper below to generate your agreement and email it to <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>. If the helper is unavailable, use the downloadable template instead.",
+    fr: "Utilisez l’assistant ci-dessous pour générer votre contrat et l’envoyer à <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>. Si l’assistant n’est pas disponible, utilisez plutôt le gabarit téléchargeable.",
   },
-  "contractStandard.body": {
-    en: `Always available and bilingual. Use the fillable PDF form, sign digitally or by hand, and email it to <a href="mailto:storage@as-colle.com" data-contact-email>storage@as-colle.com</a>. Once our team validates the information, they will reach out for a deposit to reserve your spot.`,
-    fr: `Toujours disponibles et bilingues. Utilisez le PDF remplissable, signez-le numériquement ou à la main et envoyez-le à <a href="mailto:storage@as-colle.com" data-contact-email>storage@as-colle.com</a>. Une fois les informations validées, notre équipe communiquera avec vous pour percevoir le dépôt.`,
+  "contractHelper.readerNote": {
+    en: `While the contract PDF works in most viewers, it performs best in Adobe Acrobat Reader (free on Windows, macOS, iOS and Android). <a href="https://get.adobe.com/reader/" target="_blank" rel="noreferrer">Download Adobe Acrobat Reader</a> to make sure every field, signature and printout stays intact. Other apps sometimes flatten or skip data, so double-check if you use an alternative.`,
+    fr: `Le contrat PDF fonctionne dans la plupart des visionneuses, mais il est plus fiable dans Adobe Acrobat Reader (gratuit sur Windows, macOS, iOS et Android). <a href="https://get.adobe.com/reader/" target="_blank" rel="noreferrer">Téléchargez Adobe Acrobat Reader</a> pour garantir que tous les champs, signatures et impressions demeurent intacts. D’autres applications peuvent aplatir ou omettre des données; vérifiez votre copie si vous utilisez une solution différente.`,
   },
-  "contractStandard.button": {
-    en: "Download blank contract",
-    fr: "Télécharger le contrat vierge",
+  "contractHelper.downloadLink": {
+    en: "Download the fillable PDF template",
+    fr: "Télécharger le gabarit remplissable",
   },
-  "contractStandard.mobileNote": {
-    en: "On phones, download the bilingual PDF and send it in once completed. The smart helper is available on tablets and desktops.",
-    fr: "Sur téléphone, téléchargez le PDF bilingue et retournez-le une fois rempli. L’assistant intelligent est offert sur tablette et ordinateur.",
+  "contractHelper.mobileNote": {
+    en: "On a phone? Download the blank PDF, fill it in, and email it to us.",
+    fr: "Sur téléphone? Téléchargez le PDF vierge, remplissez-le et envoyez-le-nous.",
   },
   "contractHelper.title": {
     en: "Smart contract helper",
@@ -615,7 +659,7 @@ const I18N = {
     en: "-- Please select one --",
     fr: "-- Veuillez choisir --",
   },
-  "form.fullName.label": { en: "Full name", fr: "Nom complet" },
+  "form.fullName.label": { en: "Name", fr: "Nom" },
   "form.phone.label": { en: "Phone", fr: "Téléphone" },
   "form.email.label": { en: "Email", fr: "Courriel" },
   "form.address.label": { en: "Mailing address", fr: "Adresse postale" },
@@ -628,6 +672,14 @@ const I18N = {
   "form.model.label": { en: "Model", fr: "Modèle" },
   "form.colour.label": { en: "Colour", fr: "Couleur" },
   "form.length.label": { en: "Length (ft)", fr: "Longueur (pi)" },
+  "form.length.helpLabel": {
+    en: "Length details",
+    fr: "Détails sur la longueur",
+  },
+  "form.length.helpText": {
+    en: "Enter the actual overall length and round up for pricing. Example: an Airstream Safari 25 ft measures 25 ft 10 in, so the calculation uses 26 ft. Length is verified on drop-off day.",
+    fr: "Inscrivez la longueur totale réelle et arrondissez à la hausse pour le calcul. Ex. une Airstream Safari 25 pi mesure 25 pi 10 po, donc le calcul se fait avec 26 pi. Cette mesure est vérifiée lors de la journée de dépôt.",
+  },
   "form.year.label": { en: "Year", fr: "Année" },
   "form.plate.label": { en: "Plate", fr: "Plaque" },
   "form.vehicleProvince.label": { en: "Province", fr: "Province" },
@@ -644,6 +696,10 @@ const I18N = {
     fr: "Numéro de police",
   },
   "form.expiration.label": { en: "Expiration", fr: "Expiration" },
+  "form.expiration.warning": {
+    en: "Insurance expires before the required coverage window (15 days after the season ends). As per contract conditions, the tenant is responsible for renewing the policy to keep the vehicle covered.",
+    fr: "L’assurance expire avant la période requise (15 jours après la fin de la saison). Selon les conditions du contrat, le locataire est responsable de renouveler la police pour que le véhicule demeure assuré.",
+  },
   "form.service.battery": {
     en: "Battery charging service",
     fr: "Service de charge de batterie",
@@ -704,7 +760,23 @@ const I18N = {
     en: "Tell us what you need stored & your ideal drop-off date",
     fr: "Précisez ce que vous souhaitez entreposer et votre date idéale",
   },
-  "contactForm.submit": { en: "Compose email", fr: "Préparer le courriel" },
+  "contactForm.upload.label": {
+    en: "Documents",
+    fr: "Documents",
+  },
+  "contactForm.upload.button": {
+    en: "Upload files",
+    fr: "Téléverser les fichiers",
+  },
+  "contactForm.upload.hint": {
+    en: "Upload your signed contract, registration photo and insurance certificate for each vehicle. Files stay on this device until you press Send.",
+    fr: "Téléversez votre contrat signé, une photo de l’immatriculation et votre attestation d’assurance pour chaque véhicule. Les fichiers demeurent sur cet appareil jusqu’à l’envoi.",
+  },
+  "contactForm.attachments.note": {
+    en: "Requested documents",
+    fr: "Documents requis",
+  },
+  "contactForm.submit": { en: "Send", fr: "Envoyer" },
   "contactForm.hint": {
     en: "Submitting opens a ready-to-send email so nothing gets lost.",
     fr: "L’envoi ouvre un courriel prêt à être expédié pour ne rien oublier.",
@@ -716,9 +788,13 @@ const I18N = {
     fr: "Générez un aperçu pour valider les détails avant l’export.",
   },
   "modal.close": { en: "Close preview", fr: "Fermer l’aperçu" },
-  "modal.instructionsText": {
-    en: `Once signed, email the contract to <a href="mailto:storage@as-colle.com" data-contact-email>storage@as-colle.com</a>.`,
-    fr: `Une fois signé, envoyez le contrat à <a href="mailto:storage@as-colle.com" data-contact-email>storage@as-colle.com</a>.`,
+  "modal.instructionsDownload": {
+    en: "Download the PDF and sign it digitally or by hand",
+    fr: "Téléchargez le PDF, puis signez-le numériquement ou à la main",
+  },
+  "modal.instructionsEmail": {
+    en: `Once signed, email the contract to <a href="mailto:warehouse@as-colle.com">warehouse@as-colle.com</a>. Use the "Email shortcut" form below—it opens a pre-filled message; attach your signed contract, a registration photo, and your insurance certificate, then press Send.`,
+    fr: `Une fois signé, envoyez le contrat à <a href="mailto:warehouse@as-colle.com">warehouse@as-colle.com</a>. Utilisez le formulaire « Raccourci courriel » ci-dessous : il prépare déjà le message; joignez votre contrat signé, une photo de l’immatriculation et votre attestation d’assurance, puis appuyez sur Envoyer.`,
   },
   "modal.signingLabel": {
     en: "Signing instructions",
@@ -785,6 +861,10 @@ const I18N = {
   },
 };
 
+const ETIQUETTE_TOOLTIP_KEYS = {
+  "etiquette.item.tarp": "etiquette.tooltip.tarp",
+};
+
 const getTranslation = (key, lang = currentLanguage) => {
   const entry = I18N[key];
   if (!entry) return "";
@@ -812,10 +892,56 @@ const getLocalizedText = (value, lang = currentLanguage) => {
   return value || "";
 };
 
+const resolvePolicyEntry = (policy, lang = currentLanguage) => {
+  if (!policy) return { text: "", tooltipKey: undefined };
+  if (typeof policy === "function") {
+    return { text: policy(lang) || "", tooltipKey: undefined };
+  }
+  if (policy && typeof policy === "object" && "text" in policy) {
+    return {
+      text: getLocalizedText(policy.text, lang),
+      tooltipKey: policy.tooltipKey,
+    };
+  }
+  return {
+    text: getLocalizedText(policy, lang),
+    tooltipKey: policy.tooltipKey,
+  };
+};
+
 const SEASON_LOOKUP = SEASON_DEFINITIONS.reduce((acc, season) => {
   acc[season.id] = season;
   return acc;
 }, {});
+
+const normalizeSeasonDateString = (value = "") => {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return "";
+  const frenchAdjusted = trimmed.replace(
+    /(\d{1,2})(er)?\s([^.\s]+)\.?(?:\s)?(\d{4})/i,
+    "$3 $1, $4",
+  );
+  return frenchAdjusted.replace(
+    /(\d{1,2})\s([A-Za-z]+)\s(\d{4})/i,
+    "$2 $1, $3",
+  );
+};
+
+const parseSeasonDate = (value = "") => {
+  const normalized = normalizeSeasonDateString(value);
+  if (!normalized) return null;
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getSeasonPickupDate = (seasonValue) => {
+  if (!seasonValue) return null;
+  const season =
+    typeof seasonValue === "string" ? SEASON_LOOKUP[seasonValue] : seasonValue;
+  if (!season || !season.pickupDeadline) return null;
+  const pickupText = getLocalizedText(season.pickupDeadline, "en");
+  return parseSeasonDate(pickupText);
+};
 
 const getAllSeasonCards = () => [...SEASON_DEFINITIONS, SHARED_POLICY_CARD];
 
@@ -1004,11 +1130,73 @@ const buildSeasonCards = () => {
     }
     const list = document.createElement("ul");
     (season.policies || []).forEach((policy) => {
+      const { text, tooltipKey } = resolvePolicyEntry(policy);
+      if (!text) return;
       const li = document.createElement("li");
-      li.textContent = getLocalizedText(policy);
+      li.textContent = text;
+      if (tooltipKey) {
+        const tooltip = getTranslation(tooltipKey);
+        if (tooltip) {
+          const info = document.createElement("span");
+          info.className = "info-badge";
+          info.tabIndex = 0;
+          info.setAttribute("role", "button");
+          info.setAttribute(
+            "aria-label",
+            getTranslation("policies.tooltipLabel"),
+          );
+          info.dataset.tooltip = tooltip;
+          info.textContent = "?";
+          li.appendChild(info);
+        }
+      }
       list.appendChild(li);
     });
     card.appendChild(list);
+    if (season.id === "shared") {
+      const etiquetteSection = document.createElement("div");
+      etiquetteSection.className = "season-card__etiquette";
+      const etiquetteHeading = document.createElement("h3");
+      etiquetteHeading.textContent = getTranslation("etiquette.heading");
+      const etiquetteIntro = document.createElement("p");
+      etiquetteIntro.textContent = getTranslation("etiquette.intro");
+      const etiquetteList = document.createElement("ul");
+      [
+        "etiquette.item.clean",
+        "etiquette.item.propane",
+        "etiquette.item.tires",
+        "etiquette.item.tarp",
+      ].forEach((key) => {
+        const text = getTranslation(key);
+        if (!text) return;
+        const li = document.createElement("li");
+        const textSpan = document.createElement("span");
+        textSpan.textContent = text;
+        li.appendChild(textSpan);
+        const tooltipKey = ETIQUETTE_TOOLTIP_KEYS[key];
+        if (tooltipKey) {
+          const tooltipText = getTranslation(tooltipKey);
+          if (tooltipText) {
+            const info = document.createElement("span");
+            info.className = "info-badge";
+            info.tabIndex = 0;
+            info.setAttribute("role", "button");
+            info.setAttribute(
+              "aria-label",
+              getTranslation("etiquette.tooltipLabel"),
+            );
+            info.dataset.tooltip = tooltipText;
+            info.textContent = "?";
+            li.appendChild(info);
+          }
+        }
+        etiquetteList.appendChild(li);
+      });
+      etiquetteSection.appendChild(etiquetteHeading);
+      etiquetteSection.appendChild(etiquetteIntro);
+      etiquetteSection.appendChild(etiquetteList);
+      card.appendChild(etiquetteSection);
+    }
     seasonGridEl.appendChild(card);
   });
 };
@@ -1109,7 +1297,45 @@ const initFormStepper = () => {
   const insuranceExpirationInput = form.querySelector(
     'input[name="insuranceExpiration"]',
   );
+  const insuranceExpirationWarning = form.querySelector(
+    "[data-insurance-warning]",
+  );
   const propaneCheckbox = form.querySelector('input[name="propane"]');
+  const contactForm = document.getElementById("contact-form");
+  const contactNameInput = contactForm?.elements?.name || null;
+  const contactEmailInput = contactForm?.elements?.email || null;
+  const contactVehicleInput = contactForm?.elements?.vehicle || null;
+
+  const setContactPrefillValue = (input, value) => {
+    if (!input) return;
+    const nextValue = typeof value === "string" ? value.trim() : "";
+    if (!nextValue) return;
+    const previousPrefill = input.dataset.prefillValue || "";
+    if (!input.value || input.value === previousPrefill) {
+      input.value = nextValue;
+    }
+    input.dataset.prefillValue = nextValue;
+  };
+
+  const getContactVehicleDisplay = () => {
+    if (!vehicleTypeSelect) return "";
+    const selectedValue = vehicleTypeSelect.value;
+    if (!selectedValue) return "";
+    if (selectedValue === "Other") {
+      return vehicleTypeOtherInput?.value?.trim() || "";
+    }
+    return getVehicleLabelForLanguage(selectedValue);
+  };
+
+  const updateContactPrefillFromContract = () => {
+    if (!contactForm) return;
+    const tenantNameValue = form.elements.tenantName?.value?.trim();
+    const tenantEmailValue = form.elements.email?.value?.trim();
+    const vehicleDisplay = getContactVehicleDisplay();
+    setContactPrefillValue(contactNameInput, tenantNameValue);
+    setContactPrefillValue(contactEmailInput, tenantEmailValue);
+    setContactPrefillValue(contactVehicleInput, vehicleDisplay);
+  };
 
   let isApplyingFormMemory = false;
   const loadFormMemory = (type = vehicleTypeSelect?.value) => {
@@ -1213,27 +1439,22 @@ const initFormStepper = () => {
     }
   };
 
-  const enforceInsuranceExpiration = () => {
+  const updateInsuranceExpirationWarning = () => {
+    if (!insuranceExpirationWarning) return;
+    insuranceExpirationWarning.hidden = true;
     if (!seasonSelect || !insuranceExpirationInput) return;
     const seasonData = SEASON_LOOKUP[seasonSelect.value];
-    if (!seasonData || !seasonData.pickupDeadline) {
-      insuranceExpirationInput.min = "";
-      return;
+    const expirationValue = insuranceExpirationInput.value;
+    if (!seasonData || !expirationValue) return;
+    const pickupDate = getSeasonPickupDate(seasonData);
+    if (!pickupDate) return;
+    const cutoffDate = new Date(pickupDate.getTime());
+    cutoffDate.setDate(cutoffDate.getDate() + INSURANCE_BUFFER_DAYS);
+    const expirationDate = new Date(expirationValue);
+    if (Number.isNaN(expirationDate.getTime())) return;
+    if (expirationDate < cutoffDate) {
+      insuranceExpirationWarning.hidden = false;
     }
-    const pickupText = getLocalizedText(seasonData.pickupDeadline, "en");
-    const parsedDate = pickupText
-      .replace(/(\d{1,2})\s([A-Za-z]+)\s(\d{4})/, "$2 $1, $3")
-      .replace(/(\d{1,2})(er)?\s([^.\s]+)\.?(?:\s)?(\d{4})/, "$3 $1, $4");
-    const baseDate = new Date(parsedDate);
-    if (Number.isNaN(baseDate.getTime())) {
-      insuranceExpirationInput.min = "";
-      return;
-    }
-    baseDate.setDate(baseDate.getDate() + 30);
-    const yyyy = baseDate.getFullYear();
-    const mm = String(baseDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(baseDate.getDate()).padStart(2, "0");
-    insuranceExpirationInput.min = `${yyyy}-${mm}-${dd}`;
   };
 
   const updateLeaseDuration = () => {
@@ -1258,9 +1479,18 @@ const initFormStepper = () => {
     seasonSelect.addEventListener("change", () => {
       updateLeaseDuration();
       updateEstimatedCost();
-      enforceInsuranceExpiration();
+      updateInsuranceExpirationWarning();
     });
-    enforceInsuranceExpiration();
+    updateInsuranceExpirationWarning();
+  }
+
+  if (insuranceExpirationInput) {
+    ["change", "input"].forEach((eventName) => {
+      insuranceExpirationInput.addEventListener(
+        eventName,
+        updateInsuranceExpirationWarning,
+      );
+    });
   }
 
   const vehicleTypeOther = document.getElementById("vehicle-type-other");
@@ -1294,6 +1524,7 @@ const initFormStepper = () => {
       updateEstimatedCost();
       updateLengthRequirement();
       updatePropaneAvailability();
+      updateContactPrefillFromContract();
     };
     vehicleTypeSelect.addEventListener("change", toggleOther);
     toggleOther();
@@ -1312,12 +1543,29 @@ const initFormStepper = () => {
     },
   );
 
+  ["tenantName", "email"].forEach((fieldName) => {
+    const field = form.elements[fieldName];
+    if (!field) return;
+    ["input", "change"].forEach((eventName) => {
+      field.addEventListener(eventName, updateContactPrefillFromContract);
+    });
+  });
+  if (vehicleTypeOtherInput) {
+    ["input", "change"].forEach((eventName) => {
+      vehicleTypeOtherInput.addEventListener(
+        eventName,
+        updateContactPrefillFromContract,
+      );
+    });
+  }
+
   if (vehicleTypeSelect) {
     vehicleTypeSelect.addEventListener("change", () => {
       applyFormMemory(vehicleTypeSelect.value);
       updateLengthRequirement();
       updatePropaneAvailability();
       updateEstimatedCost();
+      updateContactPrefillFromContract();
       saveFormMemory();
     });
     updateLengthRequirement();
@@ -1352,6 +1600,7 @@ const initFormStepper = () => {
     updateLengthRequirement();
     updatePropaneAvailability();
     updateEstimatedCost();
+    updateContactPrefillFromContract();
   };
   if (resetVehicleButton) {
     resetVehicleButton.addEventListener("click", () => {
@@ -1387,6 +1636,8 @@ const initFormStepper = () => {
   updatePropaneAvailability();
   updateLeaseDuration();
   updateEstimatedCost();
+  updateInsuranceExpirationWarning();
+  updateContactPrefillFromContract();
 
   syncContractHelperLanguage = () => {
     populateSeasonSelect();
@@ -1396,6 +1647,8 @@ const initFormStepper = () => {
     updatePropaneAvailability();
     updateLeaseDuration();
     updateEstimatedCost();
+    updateInsuranceExpirationWarning();
+    updateContactPrefillFromContract();
   };
 };
 
@@ -1435,6 +1688,33 @@ const handleContactForm = () => {
   const form = document.getElementById("contact-form");
   if (!form) return;
 
+  const attachmentInput = form.querySelector('input[name="attachments"]');
+  const attachmentTrigger = form.querySelector("[data-attachment-trigger]");
+  const attachmentList = form.querySelector("[data-attachment-list]");
+
+  const updateAttachmentList = () => {
+    if (!attachmentList || !attachmentInput) return;
+    const files = [...attachmentInput.files];
+    attachmentList.innerHTML = "";
+    if (!files.length) {
+      attachmentList.hidden = true;
+      return;
+    }
+    files.forEach((file) => {
+      const item = document.createElement("li");
+      item.textContent = file.name;
+      attachmentList.appendChild(item);
+    });
+    attachmentList.hidden = false;
+  };
+
+  if (attachmentTrigger && attachmentInput) {
+    attachmentTrigger.addEventListener("click", () => attachmentInput.click());
+  }
+  if (attachmentInput) {
+    attachmentInput.addEventListener("change", updateAttachmentList);
+  }
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const data = new FormData(form);
@@ -1442,6 +1722,10 @@ const handleContactForm = () => {
     const email = (data.get("email") || "").trim();
     const vehicleInput = (data.get("vehicle") || "").trim();
     const message = (data.get("message") || "").trim();
+    const attachmentNames =
+      attachmentInput && attachmentInput.files
+        ? [...attachmentInput.files].map((file) => file.name)
+        : [];
     const readableName =
       nameInput || getTranslation("contactForm.inquiryFallback");
     const vehicleDisplay =
@@ -1455,9 +1739,13 @@ const handleContactForm = () => {
       `${getTranslation("contactForm.bodyName")}: ${readableName}`,
       `${getTranslation("contactForm.bodyEmail")}: ${email}`,
       `${getTranslation("contactForm.bodyVehicle")}: ${vehicleDisplay}`,
-      "",
-      message,
     ];
+    if (attachmentNames.length) {
+      bodyLines.push(
+        `${getTranslation("contactForm.attachments.note")}: ${attachmentNames.join(", ")}`,
+      );
+    }
+    bodyLines.push("", message);
 
     const body = encodeURIComponent(bodyLines.join("\n"));
     window.location.href = `mailto:${getContactEmail()}?subject=${subject}&body=${body}`;
@@ -1643,8 +1931,24 @@ const buildTenantAddress = (data) => {
 
 const getSharedPolicyTexts = (lang = currentLanguage) => {
   return (SHARED_POLICY_CARD.policies || [])
-    .map((policy) => getLocalizedText(policy, lang))
+    .map((policy) => resolvePolicyEntry(policy, lang).text)
     .filter(Boolean);
+};
+
+const getDropoffEtiquetteContent = (lang = currentLanguage) => {
+  const items = [
+    "etiquette.item.clean",
+    "etiquette.item.propane",
+    "etiquette.item.tires",
+    "etiquette.item.tarp",
+  ]
+    .map((key) => getTranslation(key, lang))
+    .filter(Boolean);
+  return {
+    heading: getTranslation("etiquette.heading", lang),
+    intro: getTranslation("etiquette.intro", lang),
+    items,
+  };
 };
 
 const wrapTextIntoLines = (text, font, fontSize, maxWidth) => {
@@ -1800,32 +2104,36 @@ const appendSharedPoliciesPage = (
     cursorY -= bodyLineHeight * 0.35;
   };
 
+  const drawSectionHeading = (text) => {
+    if (!text) return;
+    const normalizedTitle = text.toUpperCase();
+    ensureSpace(lineHeightForSize(titleFontSize));
+    const titleBaselineY = cursorY;
+    page.drawText(normalizedTitle, {
+      x: margin,
+      y: cursorY,
+      size: titleFontSize,
+      font: activeTitleFont || activeBodyFont,
+      characterSpacing: 0.15,
+    });
+    const titleWidth =
+      activeTitleFont?.widthOfTextAtSize(normalizedTitle, titleFontSize) ||
+      maxWidth;
+    const underlineHeight = Math.max(0.8, titleFontSize * 0.12);
+    page.drawRectangle({
+      x: margin,
+      y: titleBaselineY - titleFontSize * 0.3,
+      width: Math.min(titleWidth, maxWidth),
+      height: underlineHeight,
+    });
+    cursorY -= titleFontSize * (lineHeightMultiplier + 0.15);
+  };
+
   const title =
     getLocalizedText(SHARED_POLICY_CARD.ruleTitle, lang) ||
     getLocalizedText(SHARED_POLICY_CARD.name, lang) ||
     "Access & maintenance";
-  const normalizedTitle = title.toUpperCase();
-  ensureSpace(lineHeightForSize(titleFontSize));
-  const titleBaselineY = cursorY;
-  page.drawText(normalizedTitle, {
-    x: margin,
-    y: cursorY,
-    size: titleFontSize,
-    font: activeTitleFont || activeBodyFont,
-    characterSpacing: 0.15,
-  });
-  const titleWidth =
-    activeTitleFont?.widthOfTextAtSize(normalizedTitle, titleFontSize) ||
-    maxWidth;
-  const underlineHeight = Math.max(0.8, titleFontSize * 0.12);
-  page.drawRectangle({
-    x: margin,
-    y: titleBaselineY - titleFontSize * 0.3,
-    width: Math.min(titleWidth, maxWidth),
-    height: underlineHeight,
-  });
-  cursorY -= titleFontSize * (lineHeightMultiplier + 0.15);
-
+  drawSectionHeading(title);
   const description = getLocalizedText(SHARED_POLICY_CARD.description, lang);
   drawParagraph(description, {
     font: activeBodyFont,
@@ -1835,6 +2143,25 @@ const appendSharedPoliciesPage = (
   policies.forEach((policy) => {
     drawBulletParagraph(policy);
   });
+
+  const etiquette = getDropoffEtiquetteContent(lang);
+  if (
+    etiquette.heading ||
+    etiquette.intro ||
+    (etiquette.items && etiquette.items.length)
+  ) {
+    cursorY -= bodyFontSize * 0.15;
+    drawSectionHeading(
+      etiquette.heading ||
+        getTranslation("etiquette.heading", lang) ||
+        "Drop-off etiquette",
+    );
+    drawParagraph(etiquette.intro, {
+      font: activeBodyFont,
+      fontSize: bodyFontSize,
+    });
+    etiquette.items.forEach((item) => drawBulletParagraph(item));
+  }
 };
 
 const buildBlankContractWithPolicies = async (lang = currentLanguage) => {
@@ -1972,7 +2299,7 @@ const generateContractPdf = async (data) => {
   setDropdownField("season", pdfSeasonLabel || data.season || "");
   setTextField("tenantName", data.tenantName || "");
   setTextField("tenantPhone", formattedPhone);
-  setTextField("tenantEmail", data.tenantEmail || "");
+  setTextField("tenantEmail", data.email || "");
   setTextField("tenantAddress", tenantAddressLine);
   setDropdownField("vehicleType", pdfVehicleLabel);
   setTextField("vehicleTypeOther", data.vehicleTypeOther || "");

@@ -285,47 +285,57 @@
               </p>
             </header>
             <div class="contract__grid">
-              <article class="contract-standard">
-                <h3 data-i18n="contractStandard.title">Standard paperwork</h3>
-                <p data-i18n-html="true" data-i18n="contractStandard.body">
-                  Always available and bilingual. Use the fillable PDF form,
-                  sign digitally or by hand, and email it to
-                  <a href="mailto:storage@as-colle.com" data-contact-email
-                    >storage@as-colle.com</a
-                  >. Once our team validates the information, they will reach
-                  out for a deposit to reserve your spot.
-                </p>
-                <figure class="contract-illustration" aria-hidden="true">
-                  <img
-                    src="./static/images/ferme-colle-contract.svg"
-                    alt=""
-                    loading="lazy"
-                    aria-hidden="true"
-                  />
-                </figure>
-                <a
-                  class="button button--primary"
-                  href="./static/documents/contract-en.pdf"
-                  data-contract-download
-                  download
-                >
-                  <span data-i18n="contractStandard.button"
-                    >Download blank contract</span
-                  >
-                </a>
-                <p class="contract__mobile-note" data-i18n="contractStandard.mobileNote">
-                  On phones, download the bilingual PDF and send it in once
-                  completed. The smart helper is available on tablets and
-                  desktops.
-                </p>
-                <!--p class="contract__hint">
-                  Need to tweak terms? Replace the PDF in
-                  <code>static/documents</code> and the button will instantly
-                  serve the new file.
-                </p-->
-              </article>
-              <article class="contract-helper">
-                <h3 data-i18n="contractHelper.title">Smart contract helper</h3>
+              <article class="contract-helper-card">
+                <div class="contract-helper-card__intro">
+                  <div class="contract-helper-card__copy">
+                    <h3 data-i18n="contractHelper.title">Smart contract helper</h3>
+                    <p data-i18n-html="true" data-i18n="contractHelper.intro">
+                      Use the contract helper below to generate your agreement
+                      and email it to
+                      <a href="mailto:storage@as-colle.com" data-contact-email
+                        >storage@as-colle.com</a
+                      >. If the helper is unavailable, use the downloadable
+                      template instead.
+                    </p>
+                    <p
+                      class="contract-helper-card__reader-note"
+                      data-i18n-html="true"
+                      data-i18n="contractHelper.readerNote"
+                    >
+                      While the contract PDF works in most viewers, it performs
+                      best in Adobe Acrobat Reader (free on Windows, macOS, iOS
+                      and Android). Download it from
+                      <a
+                        href="https://get.adobe.com/reader/"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Adobe’s site
+                      </a>
+                      to ensure form fields, digital signatures and printing all
+                      behave as intended. Other apps sometimes flatten fields,
+                      so double-check your copy if you use an alternative.
+                    </p>
+                  </div>
+                  <div class="contract-helper-card__actions">
+                    <a
+                      class="button button--ghost"
+                      href="./static/documents/contract-en.pdf"
+                      data-contract-download
+                      download
+                      data-i18n="contractHelper.downloadLink"
+                    >
+                      Download the fillable PDF template
+                    </a>
+                    <p
+                      class="contract__mobile-note"
+                      data-i18n="contractHelper.mobileNote"
+                    >
+                      On a phone? Download the blank PDF, fill it in, and email
+                      it to us.
+                    </p>
+                  </div>
+                </div>
                 <form id="contract-helper">
                   <div class="form-steps-nav">
                     <button
@@ -372,16 +382,16 @@
                         </option>
                       </select>
                     </label>
-                    <label>
-                      <span data-i18n="form.fullName.label">Full name</span>
-                      <input
-                        type="text"
-                        name="tenantName"
-                        autocomplete="section-tenant name"
-                        required
-                      />
-                    </label>
-                    <div class="form-row form-row--two form-row--phone-email">
+                    <div class="form-row form-row--two form-row--name-phone">
+                      <label class="grid-2">
+                        <span data-i18n="form.fullName.label">Full name</span>
+                        <input
+                          type="text"
+                          name="tenantName"
+                          autocomplete="section-tenant name"
+                          required
+                        />
+                      </label>
                       <label class="grid-2">
                         <span data-i18n="form.phone.label">Phone</span>
                         <input
@@ -391,26 +401,28 @@
                           required
                         />
                       </label>
+                    </div>
+                    <div class="form-row form-row--address-email">
+                      <label class="grid-2">
+                        <span data-i18n="form.address.label"
+                          >Mailing address</span
+                        >
+                        <input
+                          type="text"
+                          name="tenantAddress"
+                          autocomplete="section-tenant street-address"
+                          required
+                        />
+                      </label>
                       <label class="grid-2">
                         <span data-i18n="form.email.label">Email</span>
                         <input
                           type="email"
-                          name="tenantEmail"
+                          name="email"
                           autocomplete="section-tenant email"
                         />
                       </label>
                     </div>
-                    <label class="form-field--full">
-                      <span data-i18n="form.address.label"
-                        >Mailing address</span
-                      >
-                      <input
-                        type="text"
-                        name="tenantAddress"
-                        autocomplete="section-tenant street-address"
-                        required
-                      />
-                    </label>
                     <div class="form-row form-row--city-block">
                       <label class="grid-2">
                         <span data-i18n="form.city.label">City</span>
@@ -448,33 +460,35 @@
                     </div>
                   </div>
                   <div class="form-step" data-step="2">
-                    <button
-                      type="button"
-                      class="button button--ghost button--sm contract-reset"
-                      data-reset-vehicle
-                      data-i18n="form.resetVehicle"
-                    >
-                      Clear saved vehicle data
-                    </button>
-                    <label>
-                      <span data-i18n="form.vehicleType.label"
-                        >Vehicle type</span
-                      >
-                      <select
-                        name="vehicleType"
-                        id="vehicle-type-select"
-                        required
-                      >
-                        <option
-                          value=""
-                          selected
-                          disabled
-                          data-i18n="form.selectPrompt"
+                    <div class="vehicle-type-row">
+                      <label class="vehicle-type-row__select">
+                        <span data-i18n="form.vehicleType.label"
+                          >Vehicle type</span
                         >
-                          -- Please select one --
-                        </option>
-                      </select>
-                    </label>
+                        <select
+                          name="vehicleType"
+                          id="vehicle-type-select"
+                          required
+                        >
+                          <option
+                            value=""
+                            selected
+                            disabled
+                            data-i18n="form.selectPrompt"
+                          >
+                            -- Please select one --
+                          </option>
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        class="button button--ghost button--sm contract-reset vehicle-type-row__reset"
+                        data-reset-vehicle
+                        data-i18n="form.resetVehicle"
+                      >
+                        Clear saved vehicle data
+                      </button>
+                    </div>
                     <label id="vehicle-type-other" class="hidden">
                       <span data-i18n="form.vehicleType.other"
                         >Please specify</span
@@ -497,12 +511,34 @@
                         <input type="text" name="vehicleColour" />
                       </label>
                       <label class="grid-2">
-                        <span data-i18n="form.length.label">Length (ft)</span>
+                        <span class="form-label-with-help">
+                          <span data-i18n="form.length.label">Length (ft)</span>
+                          <button
+                            type="button"
+                            class="form-label-help"
+                            aria-describedby="length-help-text"
+                            aria-label="Length details"
+                            data-i18n="form.length.helpLabel"
+                            data-i18n-attr="aria-label"
+                          >
+                            ?
+                          </button>
+                          <span
+                            id="length-help-text"
+                            class="form-label-help-text"
+                            data-i18n="form.length.helpText"
+                          >
+                            Enter the actual overall length, rounded up for
+                            billing. Example: a 25 ft 10 in trailer is billed as
+                            26 ft.
+                          </span>
+                        </span>
                         <input
                           type="number"
                           name="vehicleLength"
                           min="5"
                           max="60"
+                          class="input--compact"
                         />
                       </label>
                       <label class="grid-2 vehicle-year">
@@ -566,6 +602,17 @@
                       >
                       <input type="date" name="insuranceExpiration" />
                     </label>
+                      <p
+                      class="form-warning"
+                      data-insurance-warning
+                      data-i18n="form.expiration.warning"
+                      hidden
+                    >
+                      Insurance expires before the required coverage window
+                      (15 days after the season ends). As per contract
+                      conditions, the tenant is responsible for renewing the
+                      policy to keep the vehicle covered.
+                    </p>
                     </div>
                     <div class="form-divider" aria-hidden="true"></div>
                     <p class="form-addons-title" data-i18n="form.addons.title">
@@ -733,12 +780,46 @@
                       data-i18n-attr="placeholder"
                     ></textarea>
                   </label>
+                  <div class="file-upload">
+                    <div class="file-upload__header">
+                      <span data-i18n="contactForm.upload.label">Documents</span>
+                      <button
+                        type="button"
+                        class="button button--ghost button--xs"
+                        data-attachment-trigger
+                        data-i18n="contactForm.upload.button"
+                      >
+                        Upload files
+                      </button>
+                    </div>
+                    <p
+                      class="file-upload__hint"
+                      data-i18n="contactForm.upload.hint"
+                    >
+                      Upload your signed contract, registration photo and
+                      insurance certificate for each vehicle. Files remain on
+                      this device until you send the form.
+                    </p>
+                    <input
+                      type="file"
+                      id="contact-attachments"
+                      name="attachments"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif"
+                      multiple
+                      hidden
+                    />
+                    <ul
+                      class="file-upload__list"
+                      data-attachment-list
+                      hidden
+                    ></ul>
+                  </div>
                   <button
                     type="submit"
                     class="button button--ghost"
                     data-i18n="contactForm.submit"
                   >
-                    Compose email
+                    Send
                   </button>
                 </form>
                 <p class="contract__hint" data-i18n="contactForm.hint">
@@ -785,23 +866,34 @@
         </button>
       </header>
       <div class="contract-modal__actions">
-        <div class="contract-modal__hint">
-          <p>
-            <span data-i18n-html="true" data-i18n="modal.instructionsText">
-              Once signed, email the contract to
-            <a href="mailto:storage@as-colle.com" data-contact-email>
-              storage@as-colle.com</a>.
+          <div class="contract-modal__hint">
+            <p>
+            <span class="contract-modal__hint-text">
+              <span data-i18n="modal.instructionsDownload">
+                Download the PDF and sign it digitally or by hand
+              </span>
+              <button
+                type="button"
+                class="contract-modal__hint-info"
+                aria-label="Signing instructions"
+                data-signing-info-trigger
+                data-i18n="modal.signingLabel"
+                data-i18n-attr="aria-label"
+              >
+                ?
+              </button>
+              <span
+                data-i18n-html="true"
+                data-i18n="modal.instructionsEmail"
+              >
+                Once signed, email the contract to
+                <a href="mailto:warehouse@as-colle.com">
+                  warehouse@as-colle.com</a
+                >. Use the Email shortcut form below—just attach your signed
+                contract, registration photo and insurance certificate, then
+                press Send.
+              </span>
             </span>
-            <button
-              type="button"
-              class="contract-modal__hint-info"
-              aria-label="Signing instructions"
-              data-signing-info-trigger
-              data-i18n="modal.signingLabel"
-              data-i18n-attr="aria-label"
-            >
-              ?
-            </button>
           </p>
           <div
             class="contract-modal__hint-popover"
@@ -870,7 +962,7 @@
             <span class="container_title" data-i18n="footer.office"
               >Office</span
             >
-            <p>Ferme Colle • 276 rue Dolbec, St-Eustache, QC J7R 6N5</p>
+            <p>Ferme Colle • 276 rue Dolbec, Suite 200, St-Eustache, QC J7R 6N5</p>
           </div>
         </div>
         <div class="right"></div>

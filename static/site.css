@@ -6,6 +6,7 @@
   --muted: #61646b;
   --accent: #e48f20;
   --accent-dark: #c8780c;
+  --accent-soft: #fff4e3;
   --border: #e0dfdb;
   --shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
   font-family: "Inter", sans-serif;
@@ -220,6 +221,11 @@ img {
   font-size: 0.85rem;
 }
 
+.button--xs {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
 .contract-reset {
   margin-bottom: 12px;
   align-self: flex-start;
@@ -295,15 +301,94 @@ img {
   color: var(--muted);
 }
 
+.season-card__etiquette {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.season-card__etiquette h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.season-card__etiquette p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.season-card__etiquette ul {
+  padding-left: 20px;
+  margin: 0;
+  color: var(--text);
+}
+
+.season-card__etiquette li {
+  margin-bottom: 8px;
+}
+
+.season-card__etiquette li span:first-child {
+  color: var(--text);
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 6px;
+  color: var(--accent);
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+}
+
+.info-badge::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: min(320px, 70vw);
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.18);
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 5;
+}
+
+.info-badge:hover::after,
+.info-badge:focus-visible::after {
+  opacity: 1;
+}
+
 .facility__grid,
 .services__grid,
 .info__grid,
-.contact__grid,
-.contract__grid {
+.contact__grid {
   margin-top: 32px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
+}
+
+.contract__grid {
+  margin-top: 32px;
 }
 
 .facility__list {
@@ -510,6 +595,13 @@ label {
   gap: 6px;
 }
 
+.contract-modal__hint-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .contract-modal__hint a {
   color: inherit;
 }
@@ -579,7 +671,7 @@ label {
     align-items: stretch;
   }
 
-  .contract-helper {
+  #contract-helper {
     display: none;
   }
 }
@@ -610,6 +702,135 @@ textarea {
   flex-direction: column;
 }
 
+.vehicle-type-row {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.vehicle-type-row__select {
+  flex: 1;
+  min-width: 260px;
+}
+
+.vehicle-type-row__reset {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .vehicle-type-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .vehicle-type-row__reset {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+.input--compact {
+  width: 140px;
+}
+
+.form-warning {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(228, 143, 32, 0.3);
+  background: #fff7ed;
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.form-label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.form-label-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0;
+  cursor: help;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(228, 143, 32, 0.4),
+    0 2px 6px rgba(15, 23, 42, 0.15);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-label-help:hover,
+.form-label-help:focus-visible {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 0 0 1px rgba(228, 143, 32, 0.65),
+    0 5px 12px rgba(15, 23, 42, 0.25);
+}
+
+.form-label-help:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.form-label-help-text {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(320px, 80vw);
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(228, 143, 32, 0.4);
+  background: #fffdf8;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  z-index: 12;
+  font-weight: 500;
+}
+
+.form-label-help-text::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 16px;
+  width: 12px;
+  height: 12px;
+  background: #fffdf8;
+  border-left: 1px solid rgba(228, 143, 32, 0.4);
+  border-top: 1px solid rgba(228, 143, 32, 0.4);
+  transform: rotate(45deg);
+}
+
+.form-label-with-help:hover .form-label-help-text,
+.form-label-with-help:focus-within .form-label-help-text {
+  display: block;
+}
+
 .form-row {
   grid-column: 1 / -1;
   display: grid;
@@ -620,18 +841,14 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.form-row--phone-email {
-  grid-template-columns: 160px minmax(260px, 1fr);
-}
-
 .province-field select {
-  width: 80px;
-  min-width: 60px;
+  width: 110px;
+  min-width: 90px;
 }
 
 .postal-field input {
-  width: 115px;
-  min-width: 105px;
+  width: 140px;
+  min-width: 125px;
 }
 
 .vehicle-year input {
@@ -641,7 +858,7 @@ textarea {
 }
 
 .form-row--city-block {
-  grid-template-columns: minmax(220px, 1fr) 115px auto;
+  grid-template-columns: minmax(220px, 1fr) 140px 130px;
 }
 
 .form-row--vehicle {
@@ -654,6 +871,14 @@ textarea {
 
 .form-row--vehicle + .form-row--vehicle {
   margin-top: 4px;
+}
+
+.form-row--name-phone {
+  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr);
+}
+
+.form-row--address-email {
+  grid-template-columns: minmax(260px, 3fr) minmax(220px, 2fr);
 }
 
 .contract-illustration {
@@ -672,9 +897,9 @@ textarea {
 
 @media (max-width: 640px) {
   .form-row--two,
-  .form-row--phone-email,
   .form-row--city-block,
-  .form-row--vehicle {
+  .form-row--vehicle,
+  .form-row--address-email {
     grid-template-columns: 1fr;
   }
 }
@@ -686,15 +911,110 @@ textarea {
 
 .info__grid article,
 .services__grid article,
-.contact__grid article,
-.contract__grid article {
+.contact__grid article {
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 24px;
   background: #fcfbf8;
 }
-.contract__grid {
-  grid-template-columns: minmax(240px, 360px) minmax(320px, 1fr);
+.contract-helper-card {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: #fcfbf8;
+  padding: clamp(24px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.contract-helper-card__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contract-helper-card__copy h3 {
+  margin: 0;
+}
+
+.contract-helper-card__copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.contract-helper-card__reader-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(228, 143, 32, 0.25);
+  background: #fffdf8;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.contract-helper-card__reader-note a {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.file-upload {
+  border: 1px dashed rgba(15, 23, 42, 0.2);
+  border-radius: 16px;
+  padding: 12px 16px;
+  background: #fffdf8;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-upload__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.file-upload__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.file-upload__list {
+  margin: 4px 0 0 18px;
+  padding-left: 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.file-upload__list li {
+  margin-bottom: 2px;
+  list-style: disc;
+}
+
+.contract-helper-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contract-helper-card__actions .button {
+  width: fit-content;
+}
+
+@media (min-width: 768px) {
+  .contract-helper-card__intro {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .contract-helper-card__actions {
+    align-items: flex-start;
+  }
 }
 
 .info__grid ul,
