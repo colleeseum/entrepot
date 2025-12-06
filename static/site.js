@@ -24,6 +24,7 @@ const CONTRACT_TEMPLATES = {
   fr: "./static/documents/contract-fr.pdf",
 };
 
+
 const VEHICLE_TYPES = [
   {
     value: "RV/Motorhome",
@@ -424,8 +425,8 @@ const SHARED_POLICY_CARD = {
       fr: "Dépôt par véhicule : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $; la réservation est confirmée seulement après réception du dépôt.",
     },
     {
-      en: "Payment due on arrival via bank transfer or cash.",
-      fr: "Paiement à l’arrivée par virement bancaire ou en argent.",
+      en: "Remaining payment due on arrival via e-transfer or cash.",
+      fr: "Paiement final sera exigé à la date d’entrée par virement bancaire ou en argent.",
     },
     {
       en: "You must keep personal insurance active for the entire storage period and renew it before the pickup date if it expires.",
@@ -445,7 +446,7 @@ const SHARED_POLICY_CARD = {
         : `Battery disconnect and smart charging available for ${formatCurrency(SERVICE_PRICES.battery, lang)}, otherwise disconnect and take the battery with you.`,
     {
       en: "Drop-off and pickup appointments require 7 days notice so we can stage your bay.",
-      fr: "Les rendez-vous de rémisage/dérémisage se prennent 7 jours d’avance.",
+      fr: "Vous devez prendre un rendez-vous au moins 7 jours à l'avance avant de déposer ou de récupérer votre véhicule.",
     },
     {
       en: "No vehicle access is provided during storage; additional fees apply if we need to retrieve an item for you.",
@@ -1596,6 +1597,26 @@ const handleContractHelper = () => {
   window.addEventListener("beforeunload", cleanupPreviewUrl);
   updatePreviewActions(false);
 
+  const enhanceBlankContractDownload = () => {
+    if (!contractDownloadLink) return;
+    if (contractDownloadLink.dataset.enhanced === "true") return;
+    contractDownloadLink.dataset.enhanced = "true";
+    contractDownloadLink.addEventListener("click", async (event) => {
+      event.preventDefault();
+      try {
+        const { url, filename } = await buildBlankContractWithPolicies(
+          currentLanguage,
+        );
+        triggerDownload(url, filename || contractDownloadLink.download);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      } catch (err) {
+        console.error("Unable to append policy page to blank contract", err);
+        window.open(contractDownloadLink.href, "_blank", "noopener");
+      }
+    });
+  };
+  enhanceBlankContractDownload();
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formEntries = new FormData(form);
@@ -1618,6 +1639,234 @@ const buildTenantAddress = (data) => {
   const tenantPostal = (data.tenantPostal || "").toUpperCase().trim();
   const provincePostal = [tenantProvince, tenantPostal].filter(Boolean).join(" ");
   return [tenantStreet, tenantCity, provincePostal].filter(Boolean).join(", ");
+};
+
+const getSharedPolicyTexts = (lang = currentLanguage) => {
+  return (SHARED_POLICY_CARD.policies || [])
+    .map((policy) => getLocalizedText(policy, lang))
+    .filter(Boolean);
+};
+
+const wrapTextIntoLines = (text, font, fontSize, maxWidth) => {
+  if (!text || !font || !fontSize || !maxWidth) return [];
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) return [];
+  const words = normalized.split(" ");
+  const lines = [];
+  let currentLine = "";
+  words.forEach((word) => {
+    if (!word) return;
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+      currentLine = candidate;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      currentLine = word;
+    }
+  });
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  return lines;
+};
+
+const appendSharedPoliciesPage = (
+  pdfDoc,
+  {
+    bodyFont,
+    titleFont,
+    lang = currentLanguage,
+    titleFontSize = 11,
+    bodyFontSize = 9.5,
+    lineHeightMultiplier = 1.3,
+    useExistingPage = false,
+    existingPageBottomPadding = 140,
+  } = {},
+) => {
+  const activeBodyFont = bodyFont || titleFont;
+  const activeTitleFont = titleFont || bodyFont;
+  if (!pdfDoc || !activeBodyFont) return;
+  const policies = getSharedPolicyTexts(lang);
+  if (!policies.length) return;
+  const pages = pdfDoc.getPages();
+  const baseSize = pages.length
+    ? pages[0].getSize()
+    : { width: 612, height: 792 };
+  let width = baseSize.width || 612;
+  let height = baseSize.height || 792;
+  const margin = 50;
+  const bulletIndent = 14;
+  const bodyLineHeight = bodyFontSize * lineHeightMultiplier;
+  let page = null;
+  let cursorY = 0;
+  let maxWidth = width - margin * 2;
+  let currentBottomMargin = margin;
+
+  const setPageContext = (targetPage, bottomMargin = margin) => {
+    page = targetPage;
+    const size = page.getSize();
+    width = size.width;
+    height = size.height;
+    maxWidth = width - margin * 2;
+    cursorY = height - margin;
+    currentBottomMargin = bottomMargin;
+  };
+
+  if (useExistingPage && pages.length) {
+    setPageContext(
+      pages[pages.length - 1],
+      Math.max(existingPageBottomPadding, margin),
+    );
+  } else {
+    const newPage = pdfDoc.addPage([width, height]);
+    setPageContext(newPage);
+  }
+
+  const createPage = () => {
+    const newPage = pdfDoc.addPage([baseSize.width || 612, baseSize.height || 792]);
+    setPageContext(newPage);
+  };
+
+  const lineHeightForSize = (size) => size * lineHeightMultiplier;
+
+  const ensureSpace = (needed = bodyLineHeight) => {
+    if (cursorY - needed < currentBottomMargin) {
+      createPage();
+    }
+  };
+
+  const drawParagraph = (
+    text,
+    {
+      font = activeBodyFont,
+      fontSize = bodyFontSize,
+      spacingMultiplier = lineHeightMultiplier,
+    } = {},
+  ) => {
+    if (!text) return;
+    const paragraphs = text.split(/\n+/).filter((paragraph) => paragraph.trim());
+    if (!paragraphs.length) return;
+    paragraphs.forEach((paragraph, index) => {
+      const lines = wrapTextIntoLines(paragraph, font, fontSize, maxWidth);
+      lines.forEach((line) => {
+        const lineHeight = fontSize * spacingMultiplier;
+        ensureSpace(lineHeight);
+        page.drawText(line, {
+          x: margin,
+          y: cursorY,
+          size: fontSize,
+          font,
+        });
+        cursorY -= lineHeight;
+      });
+      if (index < paragraphs.length - 1) {
+        const extraSpacing = Math.max(spacingMultiplier - 1, 0.2);
+        cursorY -= fontSize * extraSpacing;
+      }
+    });
+    cursorY -= fontSize * 0.35;
+  };
+
+  const drawBulletParagraph = (text) => {
+    if (!text) return;
+    const bulletWidth = Math.max(maxWidth - bulletIndent, 50);
+    const lines = wrapTextIntoLines(
+      text,
+      activeBodyFont,
+      bodyFontSize,
+      bulletWidth,
+    );
+    if (!lines.length) return;
+    lines.forEach((line, index) => {
+      ensureSpace(bodyLineHeight);
+      if (index === 0) {
+        page.drawText("•", {
+          x: margin,
+          y: cursorY,
+          size: bodyFontSize,
+          font: activeBodyFont,
+        });
+      }
+      page.drawText(line, {
+        x: margin + bulletIndent,
+        y: cursorY,
+        size: bodyFontSize,
+        font: activeBodyFont,
+      });
+      cursorY -= bodyLineHeight;
+    });
+    cursorY -= bodyLineHeight * 0.35;
+  };
+
+  const title =
+    getLocalizedText(SHARED_POLICY_CARD.ruleTitle, lang) ||
+    getLocalizedText(SHARED_POLICY_CARD.name, lang) ||
+    "Access & maintenance";
+  const normalizedTitle = title.toUpperCase();
+  ensureSpace(lineHeightForSize(titleFontSize));
+  const titleBaselineY = cursorY;
+  page.drawText(normalizedTitle, {
+    x: margin,
+    y: cursorY,
+    size: titleFontSize,
+    font: activeTitleFont || activeBodyFont,
+    characterSpacing: 0.15,
+  });
+  const titleWidth =
+    activeTitleFont?.widthOfTextAtSize(normalizedTitle, titleFontSize) ||
+    maxWidth;
+  const underlineHeight = Math.max(0.8, titleFontSize * 0.12);
+  page.drawRectangle({
+    x: margin,
+    y: titleBaselineY - titleFontSize * 0.3,
+    width: Math.min(titleWidth, maxWidth),
+    height: underlineHeight,
+  });
+  cursorY -= titleFontSize * (lineHeightMultiplier + 0.15);
+
+  const description = getLocalizedText(SHARED_POLICY_CARD.description, lang);
+  drawParagraph(description, {
+    font: activeBodyFont,
+    fontSize: bodyFontSize,
+  });
+
+  policies.forEach((policy) => {
+    drawBulletParagraph(policy);
+  });
+};
+
+const buildBlankContractWithPolicies = async (lang = currentLanguage) => {
+  if (!window.PDFLib) {
+    throw new Error("PDF library unavailable");
+  }
+  const { PDFDocument, StandardFonts } = window.PDFLib;
+  const templateUrl = getContractTemplateUrl(lang);
+  const response = await fetch(templateUrl);
+  if (!response.ok) {
+    throw new Error("Unable to load the contract template PDF.");
+  }
+  const templateBytes = await response.arrayBuffer();
+  const pdfDoc = await PDFDocument.load(templateBytes);
+  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const useExistingPolicyPage = pdfDoc.getPageCount() > 1;
+  appendSharedPoliciesPage(pdfDoc, {
+    bodyFont: helvetica,
+    titleFont: helveticaBold,
+    lang,
+    titleFontSize: 11,
+    bodyFontSize: 9.5,
+    useExistingPage: useExistingPolicyPage,
+    existingPageBottomPadding: 160,
+  });
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const templateName = templateUrl.split("/").pop() || `contract-${lang}.pdf`;
+  const filename = templateName.replace(/\.pdf$/i, "-policies.pdf");
+  return { url, filename };
 };
 
 const generateContractPdf = async (data) => {
@@ -1777,6 +2026,18 @@ const generateContractPdf = async (data) => {
 
   setCheck("battery", data.battery === "yes");
   setCheck("propane", data.propane === "yes");
+
+  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const useExistingPolicyPage = pdfDoc.getPageCount() > 1;
+  appendSharedPoliciesPage(pdfDoc, {
+    bodyFont: helvetica,
+    titleFont: helveticaBold,
+    lang: formLanguage,
+    titleFontSize: 11,
+    bodyFontSize: 9.5,
+    useExistingPage: useExistingPolicyPage,
+    existingPageBottomPadding: 160,
+  });
 
   const acroFormDict = pdfDoc.catalog.lookup(PDFName.of("AcroForm"));
   if (acroFormDict) {
