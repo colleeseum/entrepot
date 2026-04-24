@@ -205,6 +205,24 @@ img {
   border-color: var(--accent-dark);
 }
 
+.button:disabled,
+.button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.48;
+  filter: grayscale(0.75);
+  box-shadow: none;
+  transform: none;
+}
+
+.button--primary:disabled,
+.button--primary[aria-disabled="true"],
+.button--primary:disabled:hover,
+.button--primary[aria-disabled="true"]:hover {
+  background: #d7dce2;
+  border-color: #d7dce2;
+  color: #667085;
+}
+
 .button--ghost {
   background: transparent;
   color: var(--surface-alt);
@@ -525,6 +543,73 @@ label {
 
 .form-step-controls .button--primary {
   margin-left: auto;
+}
+
+.request-queue {
+  grid-column: 1 / -1;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.request-queue__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.request-queue__count {
+  color: var(--muted);
+}
+
+.request-queue__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.request-queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.request-queue__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.request-queue__item span {
+  font-size: 0.9rem;
+}
+
+.request-queue__remove {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.request-queue__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .contract-modal {
@@ -969,6 +1054,44 @@ textarea {
   gap: 6px;
 }
 
+.captcha-field {
+  grid-column: 1 / -1;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  background: #fff;
+  margin-bottom: 12px;
+  min-width: min(100%, 338px);
+  overflow-x: auto;
+}
+
+.captcha-field__widget {
+  margin: 8px 0;
+  min-height: 78px;
+  min-width: 304px;
+  transform-origin: left top;
+}
+
+@media (max-width: 380px) {
+  .captcha-field__widget {
+    min-height: 64px;
+    transform: scale(0.82);
+  }
+}
+
+.captcha-field__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0;
+  font-weight: 600;
+}
+
+.captcha-field__question {
+  font-size: 1rem;
+}
+
 .file-upload__header {
   display: flex;
   justify-content: space-between;
@@ -993,6 +1116,37 @@ textarea {
 .file-upload__list li {
   margin-bottom: 2px;
   list-style: disc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-upload__item button.file-upload__remove {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.file-upload__item button.file-upload__remove:hover {
+  color: var(--text);
+}
+
+.form-status {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.form-status[data-status="success"] {
+  color: #0f8a3c;
+}
+
+.form-status[data-status="error"] {
+  color: #b91c1c;
 }
 
 .contract-helper-card__actions {

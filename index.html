@@ -8,6 +8,10 @@
       name="description"
       content="Seasonal indoor and outdoor storage for RVs, cars, snowmobiles and trailers near Ottawa and Montreal from Alfred, Ontario."
     />
+    <meta
+      name="recaptcha-site-key"
+      content="6LdtriMsAAAAAPdpmajQiMtE18YxQHECy4UIgcCx"
+    />
     <title>Ferme Colle : Storage | Entreposage saisonnier près d’Ottawa & Montréal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -274,65 +278,41 @@
           <section id="contract" class="section contract">
             <header>
               <p class="eyebrow" data-i18n="contractSection.eyebrow">
-                Contracts &amp; deposits
+                Storage requests
               </p>
               <h2 data-i18n="contractSection.heading">
-                Download the storage agreement or auto-fill one in seconds
+                Submit a storage request in minutes
               </h2>
               <p data-i18n="contractSection.description">
-                Start with our standard PDF or use our smart contract helper to
-                generate a draft that already includes your vehicle info.
+                Send your storage request and we will prepare the agreement for
+                signature.
               </p>
             </header>
             <div class="contract__grid">
               <article class="contract-helper-card">
                 <div class="contract-helper-card__intro">
                   <div class="contract-helper-card__copy">
-                    <h3 data-i18n="contractHelper.title">Smart contract helper</h3>
+                    <h3 data-i18n="contractHelper.title">Storage request</h3>
                     <p data-i18n-html="true" data-i18n="contractHelper.intro">
-                      Use the contract helper below to generate your agreement
-                      and email it to
+                      Use the form below to request storage. We will follow up
+                      with the agreement once the request is reviewed. Questions
+                      or changes?
                       <a href="mailto:storage@as-colle.com" data-contact-email
                         >storage@as-colle.com</a
-                      >. If the helper is unavailable, use the downloadable
-                      template instead.
+                      >.
                     </p>
                     <p
                       class="contract-helper-card__reader-note"
                       data-i18n-html="true"
                       data-i18n="contractHelper.readerNote"
                     >
-                      While the contract PDF works in most viewers, it performs
-                      best in Adobe Acrobat Reader (free on Windows, macOS, iOS
-                      and Android). Download it from
-                      <a
-                        href="https://get.adobe.com/reader/"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Adobe’s site
-                      </a>
-                      to ensure form fields, digital signatures and printing all
-                      behave as intended. Other apps sometimes flatten fields,
-                      so double-check your copy if you use an alternative.
+                      Submit one request per vehicle so we can prepare the right
+                      agreement and insurance checklist for you.
                     </p>
                   </div>
                   <div class="contract-helper-card__actions">
-                    <a
-                      class="button button--ghost"
-                      href="./static/documents/contract-en.pdf"
-                      data-contract-download
-                      download
-                      data-i18n="contractHelper.downloadLink"
-                    >
-                      Download the fillable PDF template
-                    </a>
-                    <p
-                      class="contract__mobile-note"
-                      data-i18n="contractHelper.mobileNote"
-                    >
-                      On a phone? Download the blank PDF, fill it in, and email
-                      it to us.
+                    <p class="contract__mobile-note" data-i18n="contractHelper.mobileNote">
+                      We will confirm availability and send the agreement by email.
                     </p>
                   </div>
                 </div>
@@ -420,6 +400,7 @@
                           type="email"
                           name="email"
                           autocomplete="section-tenant email"
+                          required
                         />
                       </label>
                     </div>
@@ -672,13 +653,63 @@
                         data-i18n-attr="placeholder"
                       />
                     </label>
+                    <div class="request-queue">
+                      <div class="request-queue__header">
+                        <span data-i18n="form.queue.title">Vehicles in this request</span>
+                        <span class="request-queue__count" data-request-count></span>
+                      </div>
+                      <p class="request-queue__empty" data-request-empty data-i18n="form.queue.empty">
+                        No extra vehicles added yet.
+                      </p>
+                      <ul class="request-queue__list" data-request-vehicle-list></ul>
+                      <div class="request-queue__actions">
+                        <button
+                          type="button"
+                          class="button button--ghost"
+                          data-add-vehicle
+                          data-i18n="form.queue.add"
+                        >
+                          Add another vehicle
+                        </button>
+                        <button
+                          type="button"
+                          class="button button--ghost hidden"
+                          data-request-reset
+                          data-i18n="form.queue.reset"
+                        >
+                          Start another request
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      class="captcha-field"
+                      role="group"
+                      aria-labelledby="request-captcha-label"
+                    >
+                      <span
+                        id="request-captcha-label"
+                        data-i18n="form.captcha.label"
+                      >
+                        Security check
+                      </span>
+                      <div
+                        class="captcha-field__widget"
+                        data-request-recaptcha-container
+                      ></div>
+                      <small
+                        class="captcha-field__hint"
+                        data-i18n="form.captcha.hint"
+                      >
+                        This helps us block automated submissions.
+                      </small>
+                    </div>
                     <div class="form-row form-row--full">
                       <button
                         class="button button--primary"
                         type="submit"
                         data-i18n="form.preview"
                       >
-                        Preview PDF
+                        Submit request
                       </button>
                     </div>
                     <p
@@ -686,9 +717,10 @@
                       data-i18n-html="true"
                       data-i18n="form.previewHint"
                     >
-                      Powered by <code>pdf-lib</code>. The draft PDF opens
-                      locally and never leaves your browser.
+                      We will review your request and follow up with the
+                      agreement and next steps.
                     </p>
+                    <p class="form-status" data-contract-status hidden></p>
                   </div>
                   <div class="form-step-controls">
                     <button
@@ -764,10 +796,30 @@
                     />
                   </label>
                   <label>
+                    <span data-i18n="contactForm.season.label">Season</span>
+                    <select
+                      name="season"
+                      data-contact-season-select
+                      required
+                    >
+                      <option value="" data-i18n="form.selectPrompt">
+                        -- Please select one --
+                      </option>
+                    </select>
+                  </label>
+                  <label>
                     <span data-i18n="contactForm.vehicle.label"
                       >Vehicle type</span
                     >
-                    <input type="text" name="vehicle" />
+                    <select
+                      name="vehicle"
+                      data-contact-vehicle-select
+                      required
+                    >
+                      <option value="" data-i18n="form.selectPrompt">
+                        -- Please select one --
+                      </option>
+                    </select>
                   </label>
                   <label>
                     <span data-i18n="contactForm.message.label">Message</span>
@@ -796,9 +848,9 @@
                       class="file-upload__hint"
                       data-i18n="contactForm.upload.hint"
                     >
-                      Upload your signed contract, registration photo and
-                      insurance certificate for each vehicle. Files remain on
-                      this device until you send the form.
+                      Upload registration photos and insurance certificates for
+                      each vehicle. Files remain on this device until you send
+                      the form.
                     </p>
                     <input
                       type="file"
@@ -814,6 +866,28 @@
                       hidden
                     ></ul>
                   </div>
+                  <div
+                    class="captcha-field"
+                    role="group"
+                    aria-labelledby="contact-captcha-label"
+                  >
+                    <span
+                      id="contact-captcha-label"
+                      data-i18n="contactForm.captcha.label"
+                    >
+                      Security check
+                    </span>
+                    <div
+                      class="captcha-field__widget"
+                      data-recaptcha-container
+                    ></div>
+                    <p
+                      class="captcha-field__hint"
+                      data-i18n="contactForm.captcha.hint"
+                    >
+                      Protected by Google reCAPTCHA.
+                    </p>
+                  </div>
                   <button
                     type="submit"
                     class="button button--ghost"
@@ -821,6 +895,7 @@
                   >
                     Send
                   </button>
+                  <p class="form-status" data-contact-status hidden></p>
                 </form>
                 <p class="contract__hint" data-i18n="contactForm.hint">
                   Submitting opens a ready-to-send email so nothing gets lost.
@@ -831,109 +906,6 @@
         </div>
         <div class="right"></div>
   </main>
-
-  <div
-    id="contract-preview-modal"
-    class="contract-modal hidden"
-    aria-hidden="true"
-  >
-    <div class="contract-modal__backdrop" data-preview-close></div>
-    <div
-      class="contract-modal__dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="contract-preview-title"
-    >
-      <header class="contract-modal__header">
-        <div>
-          <p class="eyebrow" data-i18n="modal.eyebrow">Preview &amp; export</p>
-          <h3 id="contract-preview-title" data-i18n="modal.title">
-            Contract preview
-          </h3>
-          <p id="contract-preview-status" data-i18n="modal.status">
-            Generate a preview to review details before exporting.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="contract-modal__close"
-          data-preview-close
-          aria-label="Close preview"
-          data-i18n="modal.close"
-          data-i18n-attr="aria-label"
-        >
-          &times;
-        </button>
-      </header>
-      <div class="contract-modal__actions">
-          <div class="contract-modal__hint">
-            <p>
-            <span class="contract-modal__hint-text">
-              <span data-i18n="modal.instructionsDownload">
-                Download the PDF and sign it digitally or by hand
-              </span>
-              <button
-                type="button"
-                class="contract-modal__hint-info"
-                aria-label="Signing instructions"
-                data-signing-info-trigger
-                data-i18n="modal.signingLabel"
-                data-i18n-attr="aria-label"
-              >
-                ?
-              </button>
-              <span
-                data-i18n-html="true"
-                data-i18n="modal.instructionsEmail"
-              >
-                Once signed, email the contract to
-                <a href="mailto:warehouse@as-colle.com">
-                  warehouse@as-colle.com</a
-                >. Use the Email shortcut form below—just attach your signed
-                contract, registration photo and insurance certificate, then
-                press Send.
-              </span>
-            </span>
-          </p>
-          <div
-            class="contract-modal__hint-popover"
-            role="tooltip"
-            data-signing-info
-            hidden
-          >
-            <p data-i18n="modal.signingTitle">
-              Recommended ways to complete the signature:
-            </p>
-            <ul>
-              <li data-i18n="modal.signingOption1">
-                Sign digitally in a PDF app such as Adobe Acrobat
-              </li>
-              <li data-i18n="modal.signingOption2">
-                Print, sign, scan and email the file
-              </li>
-              <li data-i18n="modal.signingOption3">
-                Use any signing process your organization prefers
-              </li>
-            </ul>
-          </div>
-        </div>
-        <button
-          type="button"
-          class="button button--ghost"
-          data-preview-download
-          disabled
-          data-i18n="modal.download"
-        >
-          Download PDF
-        </button>
-      </div>
-      <iframe
-        id="contract-preview-frame"
-        title="Contract preview"
-        loading="lazy"
-      ></iframe>
-    </div>
-  </div>
 
   <footer class="footer">
         <div class="left"></div>
@@ -969,7 +941,6 @@
       </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="./static/site.js" type="module"></script>
   </body>
 </html>

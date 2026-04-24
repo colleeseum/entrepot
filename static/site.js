@@ -1,16 +1,81 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+import {
+  connectFunctionsEmulator,
+  getFunctions,
+  httpsCallable,
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-functions.js";
+import {
+  SERVICE_PRICES as GENERATED_SERVICE_PRICES,
+  STORAGE_CONDITIONS as GENERATED_STORAGE_CONDITIONS,
+  STORAGE_ETIQUETTE as GENERATED_STORAGE_ETIQUETTE,
+  STORAGE_SEASONS as GENERATED_STORAGE_SEASONS,
+  VEHICLE_TYPES as GENERATED_VEHICLE_TYPES,
+  I18N as GENERATED_I18N,
+} from "./generated/website-text.generated.js";
+
 const CONTACT_EMAILS = {
-  default: "storage@as-colle.com",
+  default: "entrepot@as-colle.com",
   en: "warehouse@as-colle.com",
   fr: "entrepot@as-colle.com",
 };
+const CONTACT_FROM_ADDRESSES = {
+  default: "Site <entrepot@as-colle.com>",
+  en: "Site <warehouse@as-colle.com>",
+  fr: "Site <entrepot@as-colle.com>",
+};
+const IS_LOCALHOST =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+const DISABLE_MAILTO_FALLBACK = IS_LOCALHOST;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEtdh7DvpbC4T4HaQ646alWA1T9iSfz3o",
+  authDomain: "tracker-187c5.firebaseapp.com",
+  projectId: "tracker-187c5",
+  storageBucket: "tracker-187c5.firebasestorage.app",
+  messagingSenderId: "1044638579272",
+  appId: "1:1044638579272:web:8c433ce2da61137c70f67d",
+  measurementId: "G-BNNZ9YQLBK",
+};
+
+let firebaseApp = null;
+let firebaseAnalytics = null;
+let firebaseFunctions = null;
+let sendEmailCallable = null;
+let createStorageRequestCallable = null;
+let createStorageRequestsCallable = null;
+
+try {
+  firebaseApp = initializeApp(firebaseConfig);
+  try {
+    firebaseAnalytics = getAnalytics(firebaseApp);
+  } catch (analyticsErr) {
+    console.warn("Analytics unavailable", analyticsErr);
+  }
+  firebaseFunctions = getFunctions(firebaseApp);
+  if (IS_LOCALHOST) {
+    connectFunctionsEmulator(firebaseFunctions, "localhost", 5001);
+  }
+  sendEmailCallable = httpsCallable(firebaseFunctions, "sendEmail");
+  createStorageRequestCallable = httpsCallable(
+    firebaseFunctions,
+    "createStorageRequest",
+  );
+  createStorageRequestsCallable = httpsCallable(
+    firebaseFunctions,
+    "createStorageRequests",
+  );
+} catch (firebaseErr) {
+  console.warn("Firebase initialization failed", firebaseErr);
+}
 
 const getContactEmail = (lang = currentLanguage) => {
   return CONTACT_EMAILS[lang] || CONTACT_EMAILS.default;
 };
-
-const SERVICE_PRICES = {
-  battery: 25,
-  propane: 25,
+const getContactFromAddress = (lang = currentLanguage) => {
+  return CONTACT_FROM_ADDRESSES[lang] || CONTACT_FROM_ADDRESSES.default;
 };
 
 const INSURANCE_BUFFER_DAYS = 15;
@@ -20,52 +85,390 @@ const DEFAULT_LANGUAGE = "en";
 const LANGUAGE_STORAGE_KEY = "ferme-colle-language";
 let currentLanguage = DEFAULT_LANGUAGE;
 let syncContractHelperLanguage = () => {};
+let syncContactFormLanguage = () => {};
+let attachContractPdfToContactForm = null;
+let collectContractVehiclePayload = () => null;
+let resetContractVehicleFields = () => {};
+let refreshContractEstimate = () => {};
 
 const CONTRACT_TEMPLATES = {
   en: "./static/documents/contract-en.pdf",
   fr: "./static/documents/contract-fr.pdf",
 };
 
+const ensureGeneratedData = (value, label) => {
+  if (value === undefined || value === null) {
+    throw new Error(
+      `Missing generated website content: ${label}. Run "node functions/scripts/export-site-data.mjs --out static/generated/website-text.generated.js" before deploying.`,
+    );
+  }
+  return value;
+};
 
-const VEHICLE_TYPES = [
-  {
-    value: "RV/Motorhome",
-    labels: { en: "RV/Motorhome", fr: "VR/Camping-car" },
-  },
-  { value: "Car", labels: { en: "Car", fr: "Voiture" } },
-  { value: "Truck", labels: { en: "Truck", fr: "Camion" } },
-  { value: "Motorcycle", labels: { en: "Motorcycle", fr: "Motocyclette" } },
-  { value: "Can-Am Spyder", labels: { en: "Can-Am Spyder", fr: "Can-Am Spyder" } },
-  { value: "Snowmobile", labels: { en: "Snowmobile", fr: "Motoneige" } },
-  {
-    value: "Snowmobile + single trailer",
-    labels: {
-      en: "Snowmobile + single trailer",
-      fr: "Motoneige + remorque simple",
-    },
-  },
-  {
-    value: "Snowmobile + double trailer",
-    labels: {
-      en: "Snowmobile + double trailer",
-      fr: "Motoneige + remorque double",
-    },
-  },
-  { value: "Other", labels: { en: "Other", fr: "Autre" } },
-];
+const SERVICE_PRICES = ensureGeneratedData(
+  GENERATED_SERVICE_PRICES,
+  "SERVICE_PRICES",
+);
+const STORAGE_CONDITIONS = ensureGeneratedData(
+  GENERATED_STORAGE_CONDITIONS,
+  "STORAGE_CONDITIONS",
+);
+const STORAGE_ETIQUETTE = ensureGeneratedData(
+  GENERATED_STORAGE_ETIQUETTE,
+  "STORAGE_ETIQUETTE",
+);
+const SEASON_DEFINITIONS = ensureGeneratedData(
+  GENERATED_STORAGE_SEASONS,
+  "STORAGE_SEASONS",
+);
+const VEHICLE_TYPES = ensureGeneratedData(
+  GENERATED_VEHICLE_TYPES,
+  "VEHICLE_TYPES",
+)
+  .slice()
+  .sort((a, b) => {
+    const aOrder =
+      typeof a.order === "number" ? a.order : Number.MAX_SAFE_INTEGER;
+    const bOrder =
+      typeof b.order === "number" ? b.order : Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return (a.value || "").localeCompare(b.value || "");
+  });
+const I18N = ensureGeneratedData(GENERATED_I18N, "I18N");
+
+const slugifyVehicleType = (value = "") =>
+  value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/--+/g, "-");
+
+const VEHICLE_TYPE_LOOKUP = new Map();
+const VEHICLE_TYPE_SLUG_LOOKUP = new Map();
+const VEHICLE_TYPE_LEGACY_LOOKUP = new Map();
+
+VEHICLE_TYPES.forEach((type) => {
+  const key = type.id || type.value;
+  if (key) {
+    VEHICLE_TYPE_LOOKUP.set(key, type);
+  }
+  const slug = type.slug || slugifyVehicleType(type.value || "");
+  if (slug) {
+    VEHICLE_TYPE_SLUG_LOOKUP.set(slug, type);
+  }
+  const legacyValues = Array.isArray(type.legacyValues)
+    ? type.legacyValues
+    : [];
+  legacyValues.forEach((legacy) => {
+    if (!legacy) return;
+    VEHICLE_TYPE_LEGACY_LOOKUP.set(legacy, type);
+    const legacySlug = slugifyVehicleType(legacy);
+    if (legacySlug && !VEHICLE_TYPE_SLUG_LOOKUP.has(legacySlug)) {
+      VEHICLE_TYPE_SLUG_LOOKUP.set(legacySlug, type);
+    }
+  });
+  if (type.value) {
+    VEHICLE_TYPE_LEGACY_LOOKUP.set(type.value, type);
+  }
+});
+
+const getVehicleTypeEntry = (value) => {
+  if (!value) return null;
+  return (
+    VEHICLE_TYPE_LOOKUP.get(value) ||
+    VEHICLE_TYPE_LEGACY_LOOKUP.get(value) ||
+    VEHICLE_TYPE_SLUG_LOOKUP.get(slugifyVehicleType(value)) ||
+    null
+  );
+};
+
+const getVehicleTypeSlug = (value) => {
+  return getVehicleTypeEntry(value)?.slug || slugifyVehicleType(value);
+};
+
+const isOtherVehicleType = (value) => getVehicleTypeSlug(value) === "other";
+const requiresLengthForType = (value) =>
+  LENGTH_REQUIRED_TYPE_SLUGS.has(getVehicleTypeSlug(value));
+
+const REQUIRED_SERVICE_PRICE_CODES = ["battery", "propane"];
+
+const ensureServicePriceData = () => {
+  REQUIRED_SERVICE_PRICE_CODES.forEach((code) => {
+    const amount = SERVICE_PRICES[code];
+    if (typeof amount !== "number" || Number.isNaN(amount)) {
+      throw new Error(
+        `Missing service price for "${code}". Update storageAddOns in Tracker and re-run the export script.`,
+      );
+    }
+  });
+};
+
+ensureServicePriceData();
+
+const getRecaptchaSiteKey = () => {
+  if (typeof document === "undefined") return "";
+  const meta = document.querySelector('meta[name="recaptcha-site-key"]');
+  return (meta?.content || "").trim();
+};
+const RECAPTCHA_SITE_KEY = getRecaptchaSiteKey();
+const RECAPTCHA_RENDER_DELAY_MS = 250;
+const RECAPTCHA_RENDER_MAX_ATTEMPTS = 40;
+const RECAPTCHA_API_BASE_URL =
+  "https://www.google.com/recaptcha/api.js?render=explicit";
+const RECAPTCHA_LANGUAGE_CODES = {
+  en: "en",
+  fr: "fr",
+};
+let recaptchaScriptLanguage = null;
+let recaptchaScriptPromise = null;
+const recaptchaWidgets = new Map();
+
+const isRecaptchaConfigured = () => Boolean(RECAPTCHA_SITE_KEY);
+
+const getRecaptchaWidgetState = (container) => {
+  if (!container) return null;
+  if (!recaptchaWidgets.has(container)) {
+    recaptchaWidgets.set(container, {
+      widgetId: null,
+      renderAttempts: 0,
+      renderRequested: false,
+    });
+  }
+  return recaptchaWidgets.get(container);
+};
+
+const isRecaptchaWidgetReady = (container) => {
+  if (typeof window === "undefined") return false;
+  const state = getRecaptchaWidgetState(container);
+  return (
+    typeof state?.widgetId === "number" &&
+    typeof window.grecaptcha?.getResponse === "function"
+  );
+};
+
+const getRecaptchaLanguageCode = (lang = currentLanguage) => {
+  return (
+    RECAPTCHA_LANGUAGE_CODES[lang] ||
+    RECAPTCHA_LANGUAGE_CODES[DEFAULT_LANGUAGE]
+  );
+};
+
+const cleanupRecaptchaScript = () => {
+  if (typeof document !== "undefined") {
+    document
+      .querySelectorAll('script[data-recaptcha-script]')
+      .forEach((script) => script.remove());
+  }
+  if (typeof window !== "undefined") {
+    try {
+      delete window.grecaptcha;
+    } catch (err) {
+      window.grecaptcha = undefined;
+    }
+    try {
+      delete window.___grecaptcha_cfg;
+    } catch (err) {
+      window.___grecaptcha_cfg = undefined;
+    }
+  }
+  recaptchaScriptPromise = null;
+  recaptchaScriptLanguage = null;
+};
+
+const loadRecaptchaScript = (lang = currentLanguage) => {
+  if (!isRecaptchaConfigured()) return Promise.resolve();
+  if (typeof document === "undefined") {
+    return Promise.reject(
+      new Error("Document unavailable when loading reCAPTCHA."),
+    );
+  }
+  const targetLang = getRecaptchaLanguageCode(lang);
+  if (recaptchaScriptPromise && recaptchaScriptLanguage === targetLang) {
+    return recaptchaScriptPromise;
+  }
+  if (recaptchaScriptLanguage && recaptchaScriptLanguage !== targetLang) {
+    cleanupRecaptchaScript();
+  }
+  recaptchaScriptLanguage = targetLang;
+  const scriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `${RECAPTCHA_API_BASE_URL}&hl=${targetLang}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.recaptchaScript = "true";
+    script.onload = () => resolve();
+    script.onerror = () =>
+      reject(new Error("Failed to load Google reCAPTCHA script."));
+    document.head.appendChild(script);
+  });
+  recaptchaScriptPromise = scriptPromise.catch((err) => {
+    recaptchaScriptPromise = null;
+    throw err;
+  });
+  return recaptchaScriptPromise;
+};
+
+const resetRecaptchaWidgetState = (container) => {
+  if (!container) return;
+  const previous = recaptchaWidgets.get(container);
+  recaptchaWidgets.set(container, {
+    widgetId: null,
+    renderAttempts: 0,
+    renderRequested: false,
+    onChange: previous?.onChange || null,
+    onExpired: previous?.onExpired || null,
+  });
+};
+
+const configureRecaptchaWidget = (container, options = {}) => {
+  const state = getRecaptchaWidgetState(container);
+  if (!state) return;
+  state.onChange = options.onChange || null;
+  state.onExpired = options.onExpired || null;
+};
+
+const refreshRecaptchaForLanguage = () => {
+  if (!isRecaptchaConfigured()) return;
+  const containers = Array.from(recaptchaWidgets.keys());
+  containers.forEach((container) => {
+    container.innerHTML = "";
+    resetRecaptchaWidgetState(container);
+    setupRecaptchaWidget(container);
+  });
+};
+
+const setupRecaptchaWidget = (container) => {
+  const state = getRecaptchaWidgetState(container);
+  if (
+    !container ||
+    state?.renderRequested ||
+    typeof state?.widgetId === "number" ||
+    !isRecaptchaConfigured() ||
+    typeof window === "undefined"
+  ) {
+    return;
+  }
+  const attemptRender = () => {
+    console.debug("[recaptcha] render attempt", {
+      attempt: state.renderAttempts,
+      hasApi: Boolean(window.grecaptcha),
+      hasRender: Boolean(window.grecaptcha?.render),
+    });
+    if (window.grecaptcha?.render) {
+      const renderWidget = () => {
+        try {
+          state.widgetId = window.grecaptcha.render(container, {
+            sitekey: RECAPTCHA_SITE_KEY,
+            callback: (token) => {
+              if (typeof state.onChange === "function") {
+                state.onChange(token || "");
+              }
+            },
+            "expired-callback": () => {
+              if (typeof state.onExpired === "function") {
+                state.onExpired();
+              } else if (typeof state.onChange === "function") {
+                state.onChange("");
+              }
+            },
+            "error-callback": () => {
+              if (typeof state.onExpired === "function") {
+                state.onExpired();
+              } else if (typeof state.onChange === "function") {
+                state.onChange("");
+              }
+            },
+          });
+          console.debug("[recaptcha] widget rendered", {
+            widgetId: state.widgetId,
+          });
+        } catch (err) {
+          console.error("reCAPTCHA rendering failed", err);
+        }
+      };
+      if (typeof window.grecaptcha.ready === "function") {
+        window.grecaptcha.ready(renderWidget);
+      } else {
+        renderWidget();
+      }
+      return;
+    }
+    if (state.renderAttempts >= RECAPTCHA_RENDER_MAX_ATTEMPTS) {
+      console.warn("reCAPTCHA did not become ready in time.");
+      return;
+    }
+    state.renderAttempts += 1;
+    window.setTimeout(attemptRender, RECAPTCHA_RENDER_DELAY_MS);
+  };
+  state.renderRequested = true;
+  loadRecaptchaScript(currentLanguage)
+    .then(() => {
+      if (!state.renderRequested) return;
+      attemptRender();
+    })
+    .catch((err) => {
+      state.renderRequested = false;
+      console.error("reCAPTCHA script failed to load", err);
+      container.innerHTML = "";
+    });
+};
+
+const getRecaptchaToken = (container) => {
+  if (!isRecaptchaWidgetReady(container)) return "";
+  const state = getRecaptchaWidgetState(container);
+  return window.grecaptcha.getResponse(state.widgetId);
+};
+
+const resetRecaptchaWidget = (container) => {
+  if (!isRecaptchaWidgetReady(container)) return;
+  const state = getRecaptchaWidgetState(container);
+  try {
+    window.grecaptcha.reset(state.widgetId);
+  } catch (err) {
+    console.warn("reCAPTCHA reset failed", err);
+  }
+};
 
 const getVehicleLabelForLanguage = (value, lang = currentLanguage) => {
   if (!value) return "";
-  const entry = VEHICLE_TYPES.find((type) => type.value === value);
+  const entry = getVehicleTypeEntry(value);
   if (!entry) return value;
-  return entry.labels[lang] || entry.labels[DEFAULT_LANGUAGE] || value;
+  const labels = entry.labels || {};
+  return labels[lang] || labels[DEFAULT_LANGUAGE] || entry.value || value;
 };
 
-const LENGTH_REQUIRED_TYPES = new Set([
-  "RV/Motorhome",
-  "Car",
-  "Truck",
-  "Other",
+const populateVehicleOptionsForSelect = (select) => {
+  if (!select) return;
+  const selectedValue = select.value;
+  select.querySelectorAll("option[data-vehicle-option]").forEach((option) => {
+    option.remove();
+  });
+  VEHICLE_TYPES.forEach((type) => {
+    const option = document.createElement("option");
+    option.value = type.id || type.value;
+    option.dataset.vehicleOption = "true";
+    option.textContent = getVehicleLabelForLanguage(option.value);
+    select.appendChild(option);
+  });
+  if (selectedValue) {
+    select.value = selectedValue;
+    if (select.value !== selectedValue) {
+      const entry = getVehicleTypeEntry(selectedValue);
+      if (entry) {
+        select.value = entry.id || entry.value || selectedValue;
+      }
+    }
+  }
+};
+
+const LENGTH_REQUIRED_TYPE_SLUGS = new Set([
+  "rv-motorhome",
+  "car",
+  "truck",
+  "other",
 ]);
 
 const CONTRACT_FORM_MEMORY_PREFIX = "contract-helper-vehicle-";
@@ -184,228 +587,124 @@ const formatPdfDate = (value = "") => {
   return value;
 };
 
-const SEASON_DEFINITIONS = [
-  {
-    id: "winter",
-    name: { en: "Winter Storage", fr: "Entreposage d’hiver" },
-    seasonLabel: { en: "Winter 2026-2027", fr: "Hiver 2026-2027" },
-    timeframe: { en: "16 Oct 2026 – 25 Apr 2027", fr: "16 oct. 2026 – 25 avr. 2027" },
-    duration: { en: "16 Oct 2026 to 25 Apr 2027", fr: "16 oct. 2026 au 25 avr. 2027" },
-    dropoffWindow: { en: "16 Oct to 1 Nov 2026", fr: "16 oct. au 1er nov. 2026" },
-    pickupDeadline: { en: "25 Apr 2027", fr: "25 avr. 2027" },
-    description: {
-      en: "Indoor warehouses and outdoor concrete pads suited for RVs, cars, motorcycles and Spyder units.",
-      fr: "Des entrepôts intérieurs et des dalles extérieures idéales pour VR, voitures, motos et Spyder.",
-    },
-    ruleTitle: { en: "Winter key dates", fr: "Dates clés de l’hiver" },
-    offers: [
-      {
-        id: "winter-rv-indoor",
-        label: {
-          en: "Indoor trailer / motorhome",
-          fr: "Remorque ou motorisé intérieur",
-        },
-        price: {
-          mode: "perFoot",
-          rate: 23,
-          minimum: 460,
-          unit: { en: "/ ft", fr: "/ pi" },
-        },
-        note: { en: "minimum {{amount}}", fr: "minimum {{amount}}" },
-        vehicleTypes: ["RV/Motorhome"],
-      },
-      {
-        id: "winter-rv-outdoor",
-        label: {
-          en: "Concrete outdoor pad (≤30 ft)",
-          fr: "Dalle extérieure en béton (≤30 pi)",
-        },
-        price: { mode: "flat", amount: 380 },
-        note: { en: "flat rate", fr: "tarif fixe" },
-      },
-      {
-        id: "winter-car-short",
-        label: {
-          en: "Indoor car/truck (≤15 ft)",
-          fr: "Voiture/camion intérieure (≤15 pi)",
-        },
-        price: { mode: "flat", amount: 415 },
-        vehicleTypes: ["Car", "Truck"],
-        lengthRange: { max: 15 },
-      },
-      {
-        id: "winter-car-long",
-        label: {
-          en: "Indoor car/truck (15–20 ft)",
-          fr: "Voiture/truck intérieure (15–20 pi)",
-        },
-        price: { mode: "flat", amount: 460 },
-        vehicleTypes: ["Car", "Truck"],
-        lengthRange: { min: 15, exclusiveMin: true, max: 20 },
-      },
-      {
-        id: "winter-car-contact",
-        label: {
-          en: "Oversized car",
-          fr: "Voiture surdimensionnée",
-        },
-        price: { mode: "contact" },
-        vehicleTypes: ["Car", "Truck"],
-        lengthRange: { min: 20, exclusiveMin: true },
-        hideInTable: true,
-      },
-      {
-        id: "winter-motorcycle",
-        label: { en: "Indoor motorcycle", fr: "Moto intérieure" },
-        price: { mode: "flat", amount: 180 },
-        vehicleTypes: ["Motorcycle"],
-      },
-      {
-        id: "winter-spyder",
-        label: { en: "Indoor Can-Am Spyder", fr: "Can-Am Spyder intérieur" },
-        price: { mode: "flat", amount: 245 },
-        vehicleTypes: ["Can-Am Spyder"],
-      },
-      {
-        id: "winter-snowmobile",
-        label: { en: "Snowmobile", fr: "Motoneige" },
-        price: { mode: "contact" },
-        vehicleTypes: ["Snowmobile"],
-        hideInTable: true,
-      },
-      {
-        id: "winter-snowmobile-trailer",
-        label: {
-          en: "Snowmobile + single trailer",
-          fr: "Motoneige + remorque simple",
-        },
-        price: { mode: "contact" },
-        vehicleTypes: ["Snowmobile + single trailer"],
-        hideInTable: true,
-      },
-      {
-        id: "winter-other",
-        label: { en: "Other", fr: "Autre" },
-        price: { mode: "contact" },
-        vehicleTypes: ["Other"],
-        hideInTable: true,
-      },
-    ],
-    policies: [
-      {
-        en: "Drop-off window: 16 Oct – 1 Nov 2026.",
-        fr: "Période de remisage : 16 oct. au 1 nov. 2026."
-      },
-      {
-        en: "Pick-up window: 15 Apr – 25 Oct 2027.",
-        fr: "Fenêtre de déremisage : 15 avr. au 25 oct. 2027.",
-      },
-    ],
+const I18N_FALLBACKS = {
+  "form.queue.added": {
+    en: "Vehicle added to your request.",
+    fr: "Véhicule ajouté à votre demande.",
   },
-  {
-    id: "summer",
-    name: { en: "Summer Storage", fr: "Entreposage d’été" },
-    seasonLabel: { en: "Summer 2026", fr: "Été 2026" },
-    timeframe: { en: "2 May 2026 – 9 Oct 2026", fr: "2 mai 2026 – 9 oct. 2026" },
-    duration: { en: "2 May 2026 to 9 Oct 2026", fr: "2 mai 2026 au 9 oct. 2026" },
-    dropoffWindow: { en: "2 May 2026", fr: "2 mai 2026" },
-    pickupDeadline: { en: "9 Oct 2026", fr: "9 oct. 2026" },
-    description: {
-      en: "Indoor non-heated bays sized for compact cars and snowmobiles with trailer parking.",
-      fr: "Des baies non chauffées conçues pour les voitures compactes et les motoneiges avec espace pour les remorques.",
-    },
-    ruleTitle: { en: "Summer key dates", fr: "Dates clés de l’été" },
-    offers: [
-      {
-        id: "summer-car-short",
-        label: {
-          en: "Indoor car/truck (≤15 ft)",
-          fr: "Voiture/camion intérieure (≤15 pi)",
-        },
-        price: { mode: "flat", amount: 415 },
-        vehicleTypes: ["Car", "Truck"],
-        lengthRange: { max: 15 },
-      },
-      {
-        id: "summer-car-contact",
-        label: {
-          en: "Oversized car",
-          fr: "Voiture surdimensionnée",
-        },
-        price: { mode: "contact" },
-        vehicleTypes: ["Car", "Truck"],
-        lengthRange: { min: 15, exclusiveMin: true },
-        hideInTable: true,
-      },
-      {
-        id: "summer-snowmobile",
-        label: { en: "Snowmobile", fr: "Motoneige" },
-        price: { mode: "flat", amount: 180 },
-        vehicleTypes: ["Snowmobile"],
-      },
-      {
-        id: "summer-snowmobile-trailer",
-        label: {
-          en: "Snowmobile + single trailer",
-          fr: "Motoneige + remorque simple",
-        },
-        price: { mode: "flat", amount: 255 },
-        vehicleTypes: ["Snowmobile + single trailer"],
-      },
-      {
-        id: "summer-snowmobile-double",
-        label: {
-          en: "Snowmobile(s) + double trailer",
-          fr: "Motoneiges + remorque double",
-        },
-        price: { mode: "flat", amount: 450 },
-        note: { en: "flat rate", fr: "tarif fixe" },
-        vehicleTypes: ["Snowmobile + double trailer"],
-      },
-      {
-        id: "summer-rv",
-        label: { en: "RV/Motorhome", fr: "VR / Motorisé" },
-        price: { mode: "contact" },
-        vehicleTypes: ["RV/Motorhome"],
-        hideInTable: true,
-      },
-      {
-        id: "summer-motorcycle",
-        label: { en: "Motorcycle", fr: "Moto" },
-        price: { mode: "contact" },
-        vehicleTypes: ["Motorcycle"],
-        hideInTable: true,
-      },
-      {
-        id: "summer-spyder",
-        label: { en: "Can-Am Spyder", fr: "Can-Am Spyder" },
-        price: { mode: "contact" },
-        vehicleTypes: ["Can-Am Spyder"],
-        hideInTable: true,
-      },
-      {
-        id: "summer-other",
-        label: { en: "Other", fr: "Autre" },
-        price: { mode: "contact" },
-        vehicleTypes: ["Other"],
-        hideInTable: true,
-      },
-    ],
-    policies: [
-      {
-        en: "Drop-off window: 2 May  –  May 9 2026.",
-        fr: "Période de remisage : 2 mai au 9 mai 2026.",
-      },
-      {
-        en: "Pick-up window: 3 Oct – 11 Oct 2026.",
-        fr: "Fenêtre de déremisage : 3 oct. au 11 oct. 2026.",
-      },
-    ],
+  "form.queue.missingVehicle": {
+    en: "Please add a vehicle to your request.",
+    fr: "Veuillez ajouter un véhicule à votre demande.",
   },
-];
+  "form.queue.remove": {
+    en: "Remove",
+    fr: "Retirer",
+  },
+  "form.requestStatus.error": {
+    en: "Unable to submit the request right now. Please try again.",
+    fr: "Impossible d’envoyer la demande pour l’instant. Veuillez réessayer.",
+  },
+  "form.requestStatus.sending": {
+    en: "Sending your request…",
+    fr: "Envoi de votre demande…",
+  },
+  "form.requestStatus.success": {
+    en: "Request sent. Confirmation number: {{confirmation}}. We will contact you at {{email}}.",
+    fr: "Demande envoyée. Numéro de confirmation : {{confirmation}}. Nous vous contacterons à {{email}}.",
+  },
+  "form.requestStatus.successNoCode": {
+    en: "Request sent. We will contact you at {{email}}.",
+    fr: "Demande envoyée. Nous vous contacterons à {{email}}.",
+  },
+  "form.requestStatus.unavailable": {
+    en: "Request service unavailable. Please try again later.",
+    fr: "Service de demande indisponible. Veuillez réessayer plus tard.",
+  },
+  "form.captcha.error": {
+    en: "Please complete the captcha before submitting your request.",
+    fr: "Veuillez compléter le captcha avant d’envoyer votre demande.",
+  },
+  "form.captcha.hint": {
+    en: "This helps us block automated submissions.",
+    fr: "Cela nous aide à bloquer les envois automatisés.",
+  },
+  "form.captcha.label": {
+    en: "Security check",
+    fr: "Vérification de sécurité",
+  },
+  "form.captcha.unavailable": {
+    en: "Security check is still loading. Please wait a moment and try again.",
+    fr: "La vérification de sécurité est encore en chargement. Veuillez patienter et réessayer.",
+  },
+};
 
-const SHARED_POLICY_CARD = {
-  id: "shared",
+const getTranslation = (key, lang = currentLanguage) => {
+  const entry = I18N[key] || I18N_FALLBACKS[key];
+  if (!entry) return "";
+  return entry[lang] || entry[DEFAULT_LANGUAGE] || "";
+};
+
+const getMessage = (key, lang = currentLanguage) => getTranslation(key, lang);
+
+const formatTemplate = (template, replacements = {}) => {
+  if (!template) return "";
+  return template.replace(/{{(\w+)}}/g, (_, token) => {
+    const value = replacements[token];
+    return value === undefined ? "" : String(value);
+  });
+};
+
+const formatRequestError = (err) => {
+  if (!err) return "";
+  if (typeof err === "string") return err;
+  const message = err?.message ? String(err.message) : "";
+  const code = err?.code ? String(err.code) : "";
+  if (message && code && !message.includes(code)) {
+    return `${message} (${code})`;
+  }
+  if (message) return message;
+  if (code) return `Request failed (${code}).`;
+  return "";
+};
+
+const getLocale = (lang = currentLanguage) => (lang === "fr" ? "fr-CA" : "en-CA");
+const getLocalizedText = (value, lang = currentLanguage) => {
+  if (typeof value === "function") {
+    return value(lang);
+  }
+  if (value && typeof value === "object") {
+    return value[lang] || value[DEFAULT_LANGUAGE] || "";
+  }
+  return value || "";
+};
+
+const getPricingReplacements = (lang = currentLanguage) => {
+  const replacements = {};
+  Object.entries(SERVICE_PRICES || {}).forEach(([code, amount]) => {
+    replacements[`${code}Price`] = formatCurrency(amount, lang);
+  });
+  return replacements;
+};
+
+const resolvePolicyEntry = (policy, lang = currentLanguage) => {
+  if (!policy) return { text: "", tooltip: undefined };
+  if (typeof policy === "function") {
+    return { text: policy(lang) || "", tooltip: undefined };
+  }
+  const replacements = getPricingReplacements(lang);
+  const base = policy && typeof policy === "object" && "text" in policy ? policy.text : policy;
+  const textValue = getLocalizedText(base, lang);
+  const resolvedText = formatTemplate(textValue, replacements);
+  const tooltipValue =
+    policy && typeof policy === "object" && "tooltip" in policy
+      ? getLocalizedText(policy.tooltip, lang)
+      : policy?.tooltipKey
+        ? getTranslation(policy.tooltipKey, lang)
+        : undefined;
+  return { text: resolvedText, tooltip: tooltipValue };
+};
+
+const SHARED_POLICY_TEXT_FALLBACKS = {
   name: {
     en: "Access, maintenance & conditions",
     fr: "Accès, entretien et conditions",
@@ -422,491 +721,32 @@ const SHARED_POLICY_CARD = {
     en: "Access, maintenance & conditions",
     fr: "Accès, entretien et conditions",
   },
-  policies: [
-    {
-      en: "Deposit per vehicle: $100 when the estimate exceeds $250, otherwise $50; bookings are held only once the deposit is received.",
-      fr: "Dépôt par véhicule : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $; la réservation est confirmée seulement après réception du dépôt.",
-    },
-    {
-      en: "Remaining payment due on arrival via e-transfer or cash, at which time an invoice will be provided.",
-      fr: "Paiement final sera exigé à la date d’entrée par virement bancaire ou en argent et une facture vous sera remise sur place.",
-    },
-    {
-      en: "You must keep personal insurance active for the entire storage period and renew it before the pickup date if it expires.",
-      fr: "Vous devez maintenir une assurance personnelle active pendant toute la période d’entreposage et la renouveler avant la date de sortie si elle expire.",
-    },
-    {
-      en: "Drop-offs or pickups outside the assigned window incur a $30 handling fee; pickups past the deadline add $5 per day until collected.",
-      fr: "Les remisage ou déremisage hors fenêtre assignée entraînent des frais fixes de 30 $; les déremisage après la date limite ajoutent 5 $ par jour tant que le véhicule n’est pas récupéré.",
-    },
-    (lang) =>
-      lang === "fr"
-        ? `Tout réservoir de propane et d’essence doit être retiré du véhicule avant l’entreposage intérieur pour respecter les normes. Nous offrons un service d’entreposage de bonbonnes à ${formatCurrency(SERVICE_PRICES.propane, lang)} (maximum de 2 par véhicule) dans un bâtiment dédié.`
-        : `Remove every propane or gasoline tank from the vehicle before indoor storage to meet warehouse standards. We offer a propane tank storage service at ${formatCurrency(SERVICE_PRICES.propane, lang)} (maximum 2 per vehicle) in a dedicated building.`,
-    (lang) =>
-      lang === "fr"
-        ? `Le service de déconnexion et de charge intelligente est offert pour ${formatCurrency(SERVICE_PRICES.battery, lang)}; sinon, débranchez et apportez la batterie.`
-        : `Battery disconnect and smart charging available for ${formatCurrency(SERVICE_PRICES.battery, lang)}, otherwise disconnect and take the battery with you.`,
-    {
-      en: "Drop-off and pickup appointments require 7 days notice so we can stage your bay.",
-      fr: "Vous devez prendre un rendez-vous au moins 7 jours à l'avance avant de déposer ou de récupérer votre véhicule.",
-    },
-    {
-      en: "If you arrive late to the reserved drop-off time, we may ask you to leave the vehicle in the staging area so we can park it later that day.",
-      fr: "Si vous arrivez en retard à l’heure de remisage prévue, nous pourrions vous demander de laisser votre véhicule dans la zone de mise en attente pour que nous le placions plus tard dans la journée.",
-    },
-    {
-      en: "No vehicle access is provided during storage; additional fees apply if we need to retrieve an item for you.",
-      fr: "Aucun accès au véhicule pendant l'entreposage. Des frais supplémentaires seront exigés si une intervention est nécessaire pour récupérer un objet.",
-    },
-    {
-      en: "Deposits are non-refundable but transferable to another vehicle in the same season.",
-      fr: "Les dépôts sont non remboursables mais transférables à un autre véhicule de la même saison.",
-    },
-    {
-      text: {
-        en: "Tell us if your vehicle leaks oil so we can plan drip trays—bring your own tray or we can provide one for an additional fee.",
-        fr: "Informez-nous si votre véhicule fuit huile afin que nous planifiions les plateaux anti-gouttes : apportez votre propre plateau ou nous pouvons en fournir un moyennant des frais supplémentaires.",
-      },
-      tooltipKey: "policies.oil.tooltip",
-    },
-  ],
 };
 
-const I18N = {
-  "nav.seasons": { en: "Seasons", fr: "Saisons" },
-  "nav.facility": { en: "Facility", fr: "Installations" },
-  "nav.contract": { en: "Contract", fr: "Contrat" },
-  "nav.contact": { en: "Contact", fr: "Contact" },
-  "header.languageLabel": {
-    en: "Language selector",
-    fr: "Sélecteur de langue",
-  },
-  "hero.eyebrow": {
-    en: "Indoor & outdoor vehicle storage",
-    fr: "Entreposage intérieur et extérieur de véhicules",
-  },
-  "hero.title": {
-    en: "Protect your RV, car or sled in every season",
-    fr: "Protégez votre VR, voiture ou motoneige en toute saison",
-  },
-  "hero.description": {
-    en: "Two curated storage seasons with concrete floors, easy highway access, and bilingual support. Drop off in Alfred, Ontario; pay once; pick up on your schedule.",
-    fr: "Deux saisons d’entreposage avec planchers en béton, accès rapide aux routes principales et soutien bilingue. Déposez à Alfred, en Ontario, payez une fois et récupérez selon votre horaire.",
-  },
-  "hero.ctaReserve": { en: "Reserve a spot", fr: "Réservez un espace" },
-  "hero.ctaCall": { en: "Call 514-627-5377", fr: "Appelez le 514-627-5377" },
-  "hero.caption": {
-    en: "Vehicles are stored inside a secure, controlled area.",
-    fr: "Les véhicules sont entreposés dans une aire contrôlée sécurisée.",
-  },
-  "facility.eyebrow": { en: "Why Alfred?", fr: "Pourquoi Alfred?" },
-  "facility.heading": {
-    en: "Purpose-built storage only 45 minutes east of Ottawa / 60 minutes west of Montreal",
-    fr: "Un entreposage conçu sur mesure à 45 minutes d’Ottawa et 60 minutes de Montréal",
-  },
-  "facility.description": {
-    en: "Located in Alfred, Ontario with multiple indoor warehouses for RVs, cars and sleds, plus drive-through lanes and an outdoor yard poured in concrete. The same family that runs Ferme Colle oversees every check-in.",
-    fr: "Situé à Alfred, en Ontario, avec plusieurs entrepôts intérieurs pour VR, voitures et motoneiges, des allées traversantes et une cour extérieure en béton. La même famille que la Ferme Colle supervise chaque arrivée.",
-  },
-  "facility.indoor.title": {
-    en: "Indoor warehouse bays",
-    fr: "Baies d’entrepôt intérieur",
-  },
-  "facility.indoor.body": {
-    en: "Non-heated warehouse bays with 20 ft clearance keep vehicles dry and away from UV exposure.",
-    fr: "Des baies d’entrepôt non chauffées avec 20 pi de dégagement gardent les véhicules au sec et à l’abri des UV.",
-  },
-  "facility.outdoor.title": {
-    en: "Concrete outdoor pads",
-    fr: "Dalles extérieures en béton",
-  },
-  "facility.outdoor.body": {
-    en: "For economical storage, our concrete and gravel outdoor pads accommodate vehicles of every type.",
-    fr: "Pour des économies, nos dalles extérieures en béton et nos aires en gravier accueillent des véhicules de tous types.",
-  },
-  "facility.details.deposits": {
-    en: "Deposit per vehicle: $100 when the estimate exceeds $250, otherwise $50.",
-    fr: "Dépôt par véhicule : 100 $ lorsque l’estimation dépasse 250 $, sinon 50 $.",
-  },
-  "facility.details.battery": {
-    en: "Battery disconnect and intelligent charger service is available for most vehicles.",
-    fr: "Le service de déconnexion et de charge intelligente de batterie est offert pour la majorité des véhicules.",
-  },
-  "facility.details.appointments": {
-    en: "Drop-off appointments coordinated 7 days in advance.",
-    fr: "Les rendez-vous de dépôt se coordonnent 7 jours à l’avance.",
-  },
-  "facility.details.payments": {
-    en: "Payments accepted via bank transfer or cash.",
-    fr: "Les paiements se font par virement bancaire ou en argent comptant.",
-  },
-  "facility.details.insurance": {
-    en: "Personal insurance required while stored on site.",
-    fr: "Une assurance personnelle est requise pendant l’entreposage.",
-  },
-  "etiquette.heading": { en: "Drop-off etiquette", fr: "Étiquette lors du remisage" },
-  "etiquette.intro": {
-    en: "Arrival days run smoothly when every vehicle is ready to roll straight into position—these quick reminders keep the line moving. Expect the process to take about 60 to 90 minutes end to end.",
-    fr: "Les journées de remisage se déroulent mieux lorsque chaque véhicule est prêt à être placé immédiatement; ces quelques rappels gardent la file en mouvement. Prévoyez que la procédure complète prenne idéalement entre 60 et 90 minutes.",
-  },
-  "etiquette.item.clean": {
-    en: "Arrive with the vehicle washed and the interior tidy so it is storage-ready the moment you check in.",
-    fr: "Présentez-vous avec un véhicule propre et l’intérieur dégagé afin qu’il soit prêt pour l’entreposage dès l’arrivée.",
-  },
-  "etiquette.item.propane": {
-    en: "If you are not using our propane service, remove and store your own tank before coming on site.",
-    fr: "Si vous n’utilisez pas notre service de bonbonnes, retirez et rangez votre réservoir vous-même avant de vous présenter.",
-  },
-  "etiquette.item.tires": {
-    en: "Verify tire pressure ahead of time so we can manoeuvre the unit safely inside the warehouse.",
-    fr: "Vérifiez la pression des pneus à l’avance pour que nous puissions manœuvrer votre véhicule en toute sécurité dans l’entrepôt.",
-  },
-  "etiquette.item.tarp": {
-    en: "Bring any blanket, cardboard or drip pad folded and clearly labelled if you want it placed under the vehicle. Tarps are not allowed.",
-    fr: "Apportez toute couverte, carton ou tapis plié et identifié si vous souhaitez qu’il soit installé sous le véhicule. Les bâches en plastique ne sont pas permises.",
-  },
-  "etiquette.tooltipLabel": {
-    en: "Why tarps are not allowed",
-    fr: "Pourquoi les bâches sont interdites",
-  },
-  "etiquette.tooltip.tarp": {
-    en: "Plastic tarps are not allowed on the floor because they trap moisture between the tarp and the concrete, which can lead to mold, odors, slippery conditions, and long-term damage to the building’s flooring. While this does not harm your vehicle, it does create problems for the facility. For that reason, we ask all customers to keep floors uncovered or use approved breathable or raised-surface mats that do not trap moisture.",
-    fr: "Les bâches en plastique sont interdites sur le plancher, car elles emprisonnent l’humidité entre la bâche et le béton, ce qui peut entraîner des moisissures, des odeurs, des surfaces glissantes et des dommages à long terme au revêtement du bâtiment. Même si cela n’endommage pas votre véhicule, cela cause des problèmes pour l’installation. Nous demandons donc à tous les clients de laisser le plancher dégagé ou d’utiliser des tapis respirants ou surélevés qui n’emprisonnent pas l’humidité.",
-  },
-  "policies.tooltipLabel": { en: "More details", fr: "Plus de détails" },
-  "policies.oil.tooltip": {
-    en: "Cleanup fees depend on the nature and size of the leak, so we confirm pricing once we inspect the vehicle. Any cleanup we handle is invoiced separately.",
-    fr: "Les frais de nettoyage varient selon la nature et l’ampleur de la fuite; nous confirmons donc le coût après inspection, et toute intervention effectuée est facturée séparément.",
-  },
-  "seasonSection.eyebrow": {
-    en: "Seasonal plans",
-    fr: "Plans saisonniers",
-  },
-  "seasonSection.heading": {
-    en: "Pick the season that matches your storage window",
-    fr: "Choisissez la saison qui correspond à votre période d’entreposage",
-  },
-  "services.eyebrow": { en: "Add-on services", fr: "Services additionnels" },
-  "services.heading": {
-    en: "Keep essentials onsite so pickup day is effortless",
-    fr: "Gardez l’essentiel sur place pour un départ sans souci",
-  },
-  "services.description": {
-    en: "Select any add-on when you schedule your drop-off—each service is billed with your storage balance.",
-    fr: "Ajoutez les services désirés lors du dépôt : ils seront facturés avec votre entreposage.",
-  },
-  "services.battery.title": {
-    en: "Battery maintenance",
-    fr: "Entretien de batterie",
-  },
-  "services.battery.body": {
-    en: `Intelligent chargers keep your battery topped up and conditioned while the vehicle is parked indoors. Battery disconnect and intelligent charger service is available for <strong><span data-service-price="battery"></span></strong>.`,
-    fr: `Des chargeurs intelligents maintiennent votre batterie en santé pendant l’entreposage intérieur. Le service de déconnexion et de charge est offert pour <strong><span data-service-price="battery"></span></strong>.`,
-  },
-  "services.propane.title": {
-    en: "Propane tank storage",
-    fr: "Entreposage de bonbonnes de propane",
-  },
-  "services.propane.body": {
-    en: `Drop your propane tank at check-in and we store it separately in a well ventilated location so your RV can stay on site. Flat <strong><span data-service-price="propane"></span></strong> per season. (max: 2 tank)`,
-    fr: `Déposez vos bonbonnes lors de l’arrivée et nous les rangeons dans un endroit bien ventilée pour que votre VR demeure sur place. <strong><span data-service-price="propane"></span></strong> par saison. (max: 2 bonbonne)`,
-  },
-  "contractSection.eyebrow": {
-    en: "Contracts & deposits",
-    fr: "Contrats et dépôts",
-  },
-  "contractSection.heading": {
-    en: "Download the storage agreement or auto-fill one in seconds",
-    fr: "Téléchargez le contrat ou remplissez-le automatiquement en quelques secondes",
-  },
-  "contractSection.description": {
-    en: "Choose the format that suits you best: the helper auto-fills your agreement, while the fillable PDF lets you work offline. For insurance purposes, submit one contract per vehicle.",
-    fr: "Choisissez le format qui vous convient : l’assistant remplit automatiquement votre contrat tandis que le PDF remplissable permet de travailler hors ligne. Pour des raisons d’assurance, un contrat distinct est requis par véhicule.",
-  },
-  "contractHelper.intro": {
-    en: "Use the contract helper below to generate your agreement and email it to <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>. If the helper is unavailable, use the downloadable template instead.",
-    fr: "Utilisez l’assistant ci-dessous pour générer votre contrat et l’envoyer à <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>. Si l’assistant n’est pas disponible, utilisez plutôt le gabarit téléchargeable.",
-  },
-  "contractHelper.readerNote": {
-    en: `While the contract PDF works in most viewers, it performs best in Adobe Acrobat Reader (free on Windows, macOS, iOS and Android). <a href="https://get.adobe.com/reader/" target="_blank" rel="noreferrer">Download Adobe Acrobat Reader</a> to make sure every field, signature and printout stays intact. Other apps sometimes flatten or skip data, so double-check if you use an alternative.`,
-    fr: `Le contrat PDF fonctionne dans la plupart des visionneuses, mais il est plus fiable dans Adobe Acrobat Reader (gratuit sur Windows, macOS, iOS et Android). <a href="https://get.adobe.com/reader/" target="_blank" rel="noreferrer">Téléchargez Adobe Acrobat Reader</a> pour garantir que tous les champs, signatures et impressions demeurent intacts. D’autres applications peuvent aplatir ou omettre des données; vérifiez votre copie si vous utilisez une solution différente.`,
-  },
-  "contractHelper.downloadLink": {
-    en: "Download the fillable PDF template",
-    fr: "Télécharger le gabarit remplissable",
-  },
-  "contractHelper.mobileNote": {
-    en: "On a phone? Download the blank PDF, fill it in, and email it to us.",
-    fr: "Sur téléphone? Téléchargez le PDF vierge, remplissez-le et envoyez-le-nous.",
-  },
-  "contractHelper.title": {
-    en: "Smart contract helper",
-    fr: "Assistant intelligent de contrat",
-  },
-  "form.steps.tenant": { en: "1. Tenant", fr: "1. Locataire" },
-  "form.steps.vehicle": { en: "2. Vehicle", fr: "2. Véhicule" },
-  "form.steps.insurance": {
-    en: "3. Insurance & add-ons",
-    fr: "3. Assurance et ajouts",
-  },
-  "form.steps.review": {
-    en: "4. Review & submit",
-    fr: "4. Vérifier et envoyer",
-  },
-  "form.season.label": { en: "Season", fr: "Saison" },
-  "form.selectPrompt": {
-    en: "-- Please select one --",
-    fr: "-- Veuillez choisir --",
-  },
-  "form.fullName.label": { en: "Name", fr: "Nom" },
-  "form.phone.label": { en: "Phone", fr: "Téléphone" },
-  "form.email.label": { en: "Email", fr: "Courriel" },
-  "form.address.label": { en: "Mailing address", fr: "Adresse postale" },
-  "form.city.label": { en: "City", fr: "Ville" },
-  "form.postal.label": { en: "Postal code", fr: "Code postal" },
-  "form.province.label": { en: "Province", fr: "Province" },
-  "form.vehicleType.label": { en: "Vehicle type", fr: "Type de véhicule" },
-  "form.vehicleType.other": { en: "Please specify", fr: "Précisez" },
-  "form.brand.label": { en: "Brand", fr: "Marque" },
-  "form.model.label": { en: "Model", fr: "Modèle" },
-  "form.colour.label": { en: "Colour", fr: "Couleur" },
-  "form.length.label": { en: "Length (ft)", fr: "Longueur (pi)" },
-  "form.length.helpLabel": {
-    en: "Length details",
-    fr: "Détails sur la longueur",
-  },
-  "form.length.helpText": {
-    en: "Enter the actual overall length and round up for pricing. Example: an Airstream Safari 25 ft measures 25 ft 10 in, so the calculation uses 26 ft. Length is verified on drop-off day.",
-    fr: "Inscrivez la longueur totale réelle et arrondissez à la hausse pour le calcul. Ex. une Airstream Safari 25 pi mesure 25 pi 10 po, donc le calcul se fait avec 26 pi. Cette mesure est vérifiée lors de la journée de dépôt.",
-  },
-  "form.year.label": { en: "Year", fr: "Année" },
-  "form.plate.label": { en: "Plate", fr: "Plaque" },
-  "form.vehicleProvince.label": { en: "Province", fr: "Province" },
-  "form.resetVehicle": {
-    en: "Clear saved vehicle data",
-    fr: "Effacer les données du véhicule",
-  },
-  "form.insuranceCompany.label": {
-    en: "Insurance company",
-    fr: "Compagnie d’assurance",
-  },
-  "form.policyNumber.label": {
-    en: "Policy number",
-    fr: "Numéro de police",
-  },
-  "form.expiration.label": { en: "Expiration", fr: "Expiration" },
-  "form.expiration.warning": {
-    en: "Insurance expires before the required coverage window (15 days after the season ends). As per contract conditions, the tenant is responsible for renewing the policy to keep the vehicle covered.",
-    fr: "L’assurance expire avant la période requise (15 jours après la fin de la saison). Selon les conditions du contrat, le locataire est responsable de renouveler la police pour que le véhicule demeure assuré.",
-  },
-  "form.service.battery": {
-    en: "Battery charging service",
-    fr: "Service de charge de batterie",
-  },
-  "form.service.propane": {
-    en: "Propane tank storage",
-    fr: "Entreposage de bonbonne de propane",
-  },
-  "form.addons.title": {
-    en: "Add-on services",
-    fr: "Services additionnels",
-  },
-  "form.deposit.label": {
-    en: "Deposit ($) — auto: $100 if estimate > $250, else $50",
-    fr: "Dépôt ($) — auto : 100 $ si l’estimation > 250 $, sinon 50 $",
-  },
-  "form.leaseDuration.label": { en: "Lease duration", fr: "Durée du bail" },
-  "form.leaseCost.label": {
-    en: "Estimated rental cost",
-    fr: "Coût estimé de location",
-  },
-  "form.completedPlaceholder": {
-    en: "Ferme Colle will reach out with an estimate",
-    fr: "Ferme Colle vous contactera avec un devis",
-  },
-  "form.notes.label": { en: "Notes", fr: "Notes" },
-  "form.notes.placeholder": {
-    en: "Add extra drivers, storage requests or bank transfer info",
-    fr: "Ajoutez des conducteurs, demandes d’entreposage ou info de virement",
-  },
-  "form.preview": { en: "Preview PDF", fr: "Prévisualiser le PDF" },
-  "form.previewHint": {
-    en: "Powered by <code>pdf-lib</code>. The draft PDF opens locally and never leaves your browser.",
-    fr: "Propulsé par <code>pdf-lib</code>. L’ébauche de PDF s’ouvre localement et ne quitte jamais votre navigateur.",
-  },
-  "form.back": { en: "Back", fr: "Retour" },
-  "form.next": { en: "Next", fr: "Suivant" },
-  "contactSection.eyebrow": { en: "Ready to store?", fr: "Prêt à entreposer?" },
-  "contactSection.heading": {
-    en: "Call, email or send the form—everything routes to our professional team",
-    fr: "Téléphonez, écrivez ou utilisez le formulaire : tout se rend à notre équipe",
-  },
-  "contactSection.talkTitle": { en: "Talk to us", fr: "Parlez-nous" },
-  "contactSection.talkBodyPrimary": {
-    en: `Phone: <a href="tel:514-627-5377">514-627-5377</a><br />Email: <a href="mailto:storage@as-colle.com" data-contact-email>storage@as-colle.com</a><br />Site: Conc 4, Alfred, ON K0B 1A0`,
-    fr: `Téléphone : <a href="tel:514-627-5377">514-627-5377</a><br />Courriel : <a href="mailto:storage@as-colle.com" data-contact-email>storage@as-colle.com</a><br />Site : Conc 4, Alfred, ON K0B 1A0`,
-  },
-  "contactSection.talkBodySecondary": {
-    en: "We are 60 minutes from Montréal and 45 minutes from Ottawa. Drop-offs are by appointment to keep traffic moving.",
-    fr: "Nous sommes à 60 minutes de Montréal et 45 minutes d’Ottawa. Les dépôts se font sur rendez-vous pour garder la circulation fluide.",
-  },
-  "contactSection.formTitle": { en: "Email shortcut", fr: "Raccourci courriel" },
-  "contactForm.name.label": { en: "Your name", fr: "Votre nom" },
-  "contactForm.email.label": { en: "Email", fr: "Courriel" },
-  "contactForm.vehicle.label": { en: "Vehicle type", fr: "Type de véhicule" },
-  "contactForm.message.label": { en: "Message", fr: "Message" },
-  "contactForm.message.placeholder": {
-    en: "Tell us what you need stored & your ideal drop-off date",
-    fr: "Précisez ce que vous souhaitez entreposer et votre date idéale",
-  },
-  "contactForm.upload.label": {
-    en: "Documents",
-    fr: "Documents",
-  },
-  "contactForm.upload.button": {
-    en: "Upload files",
-    fr: "Téléverser les fichiers",
-  },
-  "contactForm.upload.hint": {
-    en: "Upload your signed contract, registration photo and insurance certificate for each vehicle. Files stay on this device until you press Send.",
-    fr: "Téléchargez votre contrat signé, une photo de l’immatriculation et votre attestation d’assurance pour chaque véhicule. Les fichiers demeurent sur cet appareil jusqu’à l’envoi.",
-  },
-  "contactForm.attachments.note": {
-    en: "Requested documents",
-    fr: "Documents requis",
-  },
-  "contactForm.submit": { en: "Send", fr: "Envoyer" },
-  "contactForm.hint": {
-    en: "Submitting opens a ready-to-send email so nothing gets lost.",
-    fr: "L’envoi ouvre un courriel prêt à être expédié pour ne rien oublier.",
-  },
-  "modal.eyebrow": { en: "Preview & export", fr: "Aperçu et export" },
-  "modal.title": { en: "Contract preview", fr: "Aperçu du contrat" },
-  "modal.status": {
-    en: "Generate a preview to review details before exporting.",
-    fr: "Générez un aperçu pour valider les détails avant l’export.",
-  },
-  "modal.close": { en: "Close preview", fr: "Fermer l’aperçu" },
-  "modal.instructionsDownload": {
-    en: "Download the PDF and sign it digitally or by hand",
-    fr: "Téléchargez le PDF, puis signez-le numériquement ou à la main",
-  },
-  "modal.instructionsEmail": {
-    en: `Once signed, email the contract to <a href="mailto:warehouse@as-colle.com">warehouse@as-colle.com</a>. Use the "Email shortcut" form below—it opens a pre-filled message; attach your signed contract, a registration photo, and your insurance certificate, then press Send.`,
-    fr: `Une fois signé, envoyez le contrat à <a href="mailto:warehouse@as-colle.com">warehouse@as-colle.com</a>. Utilisez le formulaire « Raccourci courriel » ci-dessous : il prépare déjà le message; joignez votre contrat signé, une photo de l’immatriculation et votre attestation d’assurance, puis appuyez sur Envoyer.`,
-  },
-  "modal.signingLabel": {
-    en: "Signing instructions",
-    fr: "Instructions de signature",
-  },
-  "modal.signingTitle": {
-    en: "Recommended ways to complete the signature:",
-    fr: "Façons recommandées de compléter la signature :",
-  },
-  "modal.signingOption1": {
-    en: "Sign digitally in a PDF app such as Adobe Acrobat",
-    fr: "Signez numériquement dans une application PDF comme Adobe Acrobat",
-  },
-  "modal.signingOption2": {
-    en: "Print, sign, scan and email the file",
-    fr: "Imprimez, signez, numérisez puis envoyez le fichier",
-  },
-  "modal.signingOption3": {
-    en: "Use any signing process your organization prefers",
-    fr: "Utilisez le processus de signature préféré de votre organisation",
-  },
-  "modal.download": { en: "Download PDF", fr: "Télécharger le PDF" },
-  "modal.readyStatus": {
-    en: "Preview ready: {{filename}}",
-    fr: "Aperçu prêt : {{filename}}",
-  },
-  "footer.address": { en: "Address", fr: "Adresse" },
-  "footer.bookings": { en: "Bookings", fr: "Réservations" },
-  "footer.office": { en: "Office", fr: "Bureau" },
-  "messages.contactForPricing": {
-    en: "Ferme Colle will reach out with an estimate.",
-    fr: "Ferme Colle vous contactera avec un devis.",
-  },
-  "messages.enterLength": {
-    en: "Enter the vehicle length to estimate pricing.",
-    fr: "Indiquez la longueur du véhicule pour obtenir une estimation.",
-  },
-  "messages.pdfError": {
-    en: "Something went wrong while building the PDF. Please try again or download the blank contract.",
-    fr: "Un problème est survenu lors de la création du PDF. Réessayez ou téléchargez le contrat vierge.",
-  },
-  "messages.seasonWindow": {
-    en: "{{dropoff}} drop-off, pick-up by {{pickup}}",
-    fr: "Dépôt {{dropoff}}, récupération au plus tard le {{pickup}}",
-  },
-  "messages.seasonWindowFallback": {
-    en: "See confirmation email",
-    fr: "Voir le courriel de confirmation",
-  },
-  "contactForm.subject": {
-    en: "Storage request from {{name}}",
-    fr: "Demande d’entreposage de {{name}}",
-  },
-  "contactForm.inquiryFallback": {
-    en: "Storage inquiry",
-    fr: "Demande d’entreposage",
-  },
-  "contactForm.bodyName": { en: "Name", fr: "Nom" },
-  "contactForm.bodyEmail": { en: "Email", fr: "Courriel" },
-  "contactForm.bodyVehicle": { en: "Vehicle", fr: "Véhicule" },
-  "contactForm.vehicleFallback": {
-    en: "Vehicle details not provided",
-    fr: "Détails du véhicule non fournis",
-  },
-};
+const loggedSharedPolicyWarnings = new Set();
 
-const ETIQUETTE_TOOLTIP_KEYS = {
-  "etiquette.item.tarp": "etiquette.tooltip.tarp",
-};
-
-const getTranslation = (key, lang = currentLanguage) => {
-  const entry = I18N[key];
-  if (!entry) return "";
-  return entry[lang] || entry[DEFAULT_LANGUAGE] || "";
-};
-
-const getMessage = (key, lang = currentLanguage) => getTranslation(key, lang);
-
-const formatTemplate = (template, replacements = {}) => {
-  if (!template) return "";
-  return template.replace(/{{(\w+)}}/g, (_, token) => {
-    const value = replacements[token];
-    return value === undefined ? "" : String(value);
-  });
-};
-
-const getLocale = (lang = currentLanguage) => (lang === "fr" ? "fr-CA" : "en-CA");
-const getLocalizedText = (value, lang = currentLanguage) => {
-  if (typeof value === "function") {
-    return value(lang);
+const getSharedPolicyText = (token, lang = currentLanguage) => {
+  const text = getTranslation(`sharedPolicies.${token}`, lang);
+  if (text) return text;
+  if (!loggedSharedPolicyWarnings.has(token)) {
+    console.warn(
+      `Missing shared policy translation: sharedPolicies.${token}. Falling back to built-in copy.`,
+    );
+    loggedSharedPolicyWarnings.add(token);
   }
-  if (value && typeof value === "object") {
-    return value[lang] || value[DEFAULT_LANGUAGE] || "";
-  }
-  return value || "";
+  const fallback = SHARED_POLICY_TEXT_FALLBACKS[token];
+  return fallback?.[lang] || fallback?.[DEFAULT_LANGUAGE] || "";
 };
 
-const resolvePolicyEntry = (policy, lang = currentLanguage) => {
-  if (!policy) return { text: "", tooltipKey: undefined };
-  if (typeof policy === "function") {
-    return { text: policy(lang) || "", tooltipKey: undefined };
-  }
-  if (policy && typeof policy === "object" && "text" in policy) {
-    return {
-      text: getLocalizedText(policy.text, lang),
-      tooltipKey: policy.tooltipKey,
-    };
-  }
-  return {
-    text: getLocalizedText(policy, lang),
-    tooltipKey: policy.tooltipKey,
-  };
+const SHARED_POLICY_CARD = {
+  id: "shared",
+  name: (lang = currentLanguage) => getSharedPolicyText("name", lang),
+  seasonLabel: (lang = currentLanguage) =>
+    getSharedPolicyText("seasonLabel", lang),
+  description: (lang = currentLanguage) =>
+    getSharedPolicyText("description", lang),
+  ruleTitle: (lang = currentLanguage) => getSharedPolicyText("ruleTitle", lang),
+  policies: STORAGE_CONDITIONS,
 };
 
 const SEASON_LOOKUP = SEASON_DEFINITIONS.reduce((acc, season) => {
@@ -951,6 +791,24 @@ const getSeasonLabelForLanguage = (seasonId, lang = currentLanguage) => {
   return getLocalizedText(season.seasonLabel, lang);
 };
 
+const populateSeasonOptionsForSelect = (select) => {
+  if (!select) return;
+  const selectedValue = select.value;
+  select.querySelectorAll("option[data-season-option]").forEach((option) => {
+    option.remove();
+  });
+  SEASON_DEFINITIONS.forEach((season) => {
+    const option = document.createElement("option");
+    option.value = season.id;
+    option.dataset.seasonOption = "true";
+    option.textContent = getSeasonLabelForLanguage(season.id);
+    select.appendChild(option);
+  });
+  if (selectedValue) {
+    select.value = selectedValue;
+  }
+};
+
 const findSeasonByLabel = (label = "") => {
   if (!label) return null;
   const normalized = label.toLowerCase();
@@ -987,10 +845,33 @@ const lengthMatchesRange = (length, range) => {
   return true;
 };
 
+const offerSupportsVehicleType = (offer, vehicleTypeId) => {
+  if (!offer || !Array.isArray(offer.vehicleTypes) || !vehicleTypeId) return false;
+  if (offer.vehicleTypes.length === 0) return true;
+  if (offer.vehicleTypes.includes(vehicleTypeId)) return true;
+  const entry = getVehicleTypeEntry(vehicleTypeId);
+  if (!entry) {
+    return offer.vehicleTypes.includes(vehicleTypeId);
+  }
+  const candidates = new Set([
+    entry.id,
+    entry.value,
+    entry.slug,
+    ...(Array.isArray(entry.legacyValues) ? entry.legacyValues : []),
+  ]);
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    if (offer.vehicleTypes.includes(candidate)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const getOffersForType = (season, vehicleType) => {
   if (!season || !vehicleType) return [];
-  return season.offers.filter(
-    (offer) => Array.isArray(offer.vehicleTypes) && offer.vehicleTypes.includes(vehicleType),
+  return season.offers.filter((offer) =>
+    offerSupportsVehicleType(offer, vehicleType),
   );
 };
 
@@ -1040,6 +921,44 @@ const estimateRentalCost = (values) => {
     total += SERVICE_PRICES.propane;
   }
   return formatCurrency(total);
+};
+
+const buildTenantPayload = (data) => {
+  return {
+    season: data.season || "",
+    tenantName: data.tenantName || "",
+    tenantPhone: data.tenantPhone || "",
+    tenantAddress: data.tenantAddress || "",
+    tenantCity: data.tenantCity || "",
+    tenantProvince: data.tenantProvince || "",
+    tenantPostal: data.tenantPostal || "",
+    email: data.email || "",
+    formLanguage: currentLanguage,
+  };
+};
+
+const buildVehicleRequestPayload = (data) => {
+  const vehicleType = data.vehicleType || "";
+  return {
+    season: data.season || "",
+    vehicleType,
+    vehicleTypeLabel: getVehicleLabelForLanguage(vehicleType),
+    vehicleTypeOther: data.vehicleTypeOther || "",
+    vehicleBrand: data.vehicleBrand || "",
+    vehicleModel: data.vehicleModel || "",
+    vehicleColour: data.vehicleColour || "",
+    vehicleLength: data.vehicleLength || "",
+    vehicleYear: data.vehicleYear || "",
+    vehiclePlate: data.vehiclePlate || "",
+    vehicleProv: data.vehicleProv || "",
+    insuranceCompany: data.insuranceCompany || "",
+    insurancePolicy: data.insurancePolicy || "",
+    insuranceExpiration: data.insuranceExpiration || "",
+    battery: data.battery === "yes",
+    propane: data.propane === "yes",
+    estimatedCost: parseCurrencyValue(data.leaseCost),
+    deposit: parseCurrencyValue(data.deposit),
+  };
 };
 
 const formatOfferPriceDisplay = (offer, lang = currentLanguage) => {
@@ -1130,25 +1049,22 @@ const buildSeasonCards = () => {
     }
     const list = document.createElement("ul");
     (season.policies || []).forEach((policy) => {
-      const { text, tooltipKey } = resolvePolicyEntry(policy);
+      const { text, tooltip } = resolvePolicyEntry(policy);
       if (!text) return;
       const li = document.createElement("li");
       li.textContent = text;
-      if (tooltipKey) {
-        const tooltip = getTranslation(tooltipKey);
-        if (tooltip) {
-          const info = document.createElement("span");
-          info.className = "info-badge";
-          info.tabIndex = 0;
-          info.setAttribute("role", "button");
-          info.setAttribute(
-            "aria-label",
-            getTranslation("policies.tooltipLabel"),
-          );
-          info.dataset.tooltip = tooltip;
-          info.textContent = "?";
-          li.appendChild(info);
-        }
+      if (tooltip) {
+        const info = document.createElement("span");
+        info.className = "info-badge";
+        info.tabIndex = 0;
+        info.setAttribute("role", "button");
+        info.setAttribute(
+          "aria-label",
+          getTranslation("policies.tooltipLabel"),
+        );
+        info.dataset.tooltip = tooltip;
+        info.textContent = "?";
+        li.appendChild(info);
       }
       list.appendChild(li);
     });
@@ -1161,34 +1077,34 @@ const buildSeasonCards = () => {
       const etiquetteIntro = document.createElement("p");
       etiquetteIntro.textContent = getTranslation("etiquette.intro");
       const etiquetteList = document.createElement("ul");
-      [
-        "etiquette.item.clean",
-        "etiquette.item.propane",
-        "etiquette.item.tires",
-        "etiquette.item.tarp",
-      ].forEach((key) => {
-        const text = getTranslation(key);
+      STORAGE_ETIQUETTE.forEach((entry) => {
+        const text = entry.text
+          ? getLocalizedText(entry.text)
+          : entry.translationKey
+            ? getTranslation(entry.translationKey)
+            : "";
         if (!text) return;
         const li = document.createElement("li");
         const textSpan = document.createElement("span");
         textSpan.textContent = text;
         li.appendChild(textSpan);
-        const tooltipKey = ETIQUETTE_TOOLTIP_KEYS[key];
-        if (tooltipKey) {
-          const tooltipText = getTranslation(tooltipKey);
-          if (tooltipText) {
-            const info = document.createElement("span");
-            info.className = "info-badge";
-            info.tabIndex = 0;
-            info.setAttribute("role", "button");
-            info.setAttribute(
-              "aria-label",
-              getTranslation("etiquette.tooltipLabel"),
-            );
-            info.dataset.tooltip = tooltipText;
-            info.textContent = "?";
-            li.appendChild(info);
-          }
+        const tooltipText = entry.tooltip
+          ? getLocalizedText(entry.tooltip)
+          : entry.tooltipKey
+            ? getTranslation(entry.tooltipKey)
+            : "";
+        if (tooltipText) {
+          const info = document.createElement("span");
+          info.className = "info-badge";
+          info.tabIndex = 0;
+          info.setAttribute("role", "button");
+          info.setAttribute(
+            "aria-label",
+            getTranslation("etiquette.tooltipLabel"),
+          );
+          info.dataset.tooltip = tooltipText;
+          info.textContent = "?";
+          li.appendChild(info);
         }
         etiquetteList.appendChild(li);
       });
@@ -1237,6 +1153,20 @@ const initFormStepper = () => {
     steps.forEach((step, idx) => {
       step.classList.toggle("active", idx === index);
     });
+    const requestRecaptchaContainer = steps[index]?.querySelector(
+      "[data-request-recaptcha-container]",
+    );
+    if (
+      requestRecaptchaContainer &&
+      !isRecaptchaWidgetReady(requestRecaptchaContainer)
+    ) {
+      requestRecaptchaContainer.innerHTML = "";
+      resetRecaptchaWidgetState(requestRecaptchaContainer);
+      window.setTimeout(
+        () => setupRecaptchaWidget(requestRecaptchaContainer),
+        0,
+      );
+    }
     navButtons.forEach((btn) => {
       btn.classList.toggle(
         "active",
@@ -1304,6 +1234,7 @@ const initFormStepper = () => {
   const contactForm = document.getElementById("contact-form");
   const contactNameInput = contactForm?.elements?.name || null;
   const contactEmailInput = contactForm?.elements?.email || null;
+  const contactSeasonSelect = contactForm?.elements?.season || null;
   const contactVehicleInput = contactForm?.elements?.vehicle || null;
 
   const setContactPrefillValue = (input, value) => {
@@ -1321,7 +1252,7 @@ const initFormStepper = () => {
     if (!vehicleTypeSelect) return "";
     const selectedValue = vehicleTypeSelect.value;
     if (!selectedValue) return "";
-    if (selectedValue === "Other") {
+    if (isOtherVehicleType(selectedValue)) {
       return vehicleTypeOtherInput?.value?.trim() || "";
     }
     return getVehicleLabelForLanguage(selectedValue);
@@ -1331,10 +1262,17 @@ const initFormStepper = () => {
     if (!contactForm) return;
     const tenantNameValue = form.elements.tenantName?.value?.trim();
     const tenantEmailValue = form.elements.email?.value?.trim();
+    const seasonValue = seasonSelect?.value?.trim() || "";
+    const vehicleValue = vehicleTypeSelect?.value?.trim() || "";
     const vehicleDisplay = getContactVehicleDisplay();
     setContactPrefillValue(contactNameInput, tenantNameValue);
     setContactPrefillValue(contactEmailInput, tenantEmailValue);
-    setContactPrefillValue(contactVehicleInput, vehicleDisplay);
+    setContactPrefillValue(contactSeasonSelect, seasonValue);
+    if (contactVehicleInput?.tagName === "SELECT") {
+      setContactPrefillValue(contactVehicleInput, vehicleValue);
+    } else {
+      setContactPrefillValue(contactVehicleInput, vehicleDisplay);
+    }
   };
 
   let isApplyingFormMemory = false;
@@ -1384,7 +1322,7 @@ const initFormStepper = () => {
     });
     isApplyingFormMemory = false;
     if (vehicleTypeSelect && vehicleTypeOther) {
-      const isOther = vehicleTypeSelect.value === "Other";
+      const isOther = isOtherVehicleType(vehicleTypeSelect.value);
       vehicleTypeOther.classList.toggle("hidden", !isOther);
       const input = vehicleTypeOther.querySelector("input");
       if (input) {
@@ -1394,38 +1332,11 @@ const initFormStepper = () => {
   };
 
   const populateSeasonSelect = () => {
-    if (!seasonSelect) return;
-    const selectedValue = seasonSelect.value;
-    seasonSelect
-      .querySelectorAll("option:not([value=''])")
-      .forEach((option) => option.remove());
-    SEASON_DEFINITIONS.forEach((season) => {
-      const option = document.createElement("option");
-      option.value = season.id;
-      option.textContent = getLocalizedText(season.seasonLabel);
-      seasonSelect.appendChild(option);
-    });
-    if (selectedValue) {
-      seasonSelect.value = selectedValue;
-    }
+    populateSeasonOptionsForSelect(seasonSelect);
   };
 
   const populateVehicleTypeOptions = () => {
-    if (!vehicleTypeSelect) return;
-    const selectedValue = vehicleTypeSelect.value;
-    vehicleTypeSelect
-      .querySelectorAll("option:not([value=''])")
-      .forEach((option) => option.remove());
-    VEHICLE_TYPES.forEach((type) => {
-      const option = document.createElement("option");
-      option.value = type.value;
-      option.textContent =
-        type.labels[currentLanguage] || type.labels[DEFAULT_LANGUAGE];
-      vehicleTypeSelect.appendChild(option);
-    });
-    if (selectedValue) {
-      vehicleTypeSelect.value = selectedValue;
-    }
+    populateVehicleOptionsForSelect(vehicleTypeSelect);
   };
 
   const applyDepositRule = (estimatedValue) => {
@@ -1496,12 +1407,12 @@ const initFormStepper = () => {
   const vehicleTypeOther = document.getElementById("vehicle-type-other");
   const updateLengthRequirement = () => {
     if (!vehicleLengthInput || !vehicleTypeSelect) return;
-    const requiresLength = LENGTH_REQUIRED_TYPES.has(vehicleTypeSelect.value);
+    const requiresLength = requiresLengthForType(vehicleTypeSelect.value);
     vehicleLengthInput.required = Boolean(requiresLength);
   };
   const updatePropaneAvailability = () => {
     if (!propaneCheckbox || !vehicleTypeSelect) return;
-    const isRv = vehicleTypeSelect.value === "RV/Motorhome";
+    const isRv = getVehicleTypeSlug(vehicleTypeSelect.value) === "rv-motorhome";
     propaneCheckbox.disabled = !isRv;
     const label = propaneCheckbox.closest("label");
     if (label) {
@@ -1515,7 +1426,7 @@ const initFormStepper = () => {
   };
   if (vehicleTypeSelect && vehicleTypeOther) {
     const toggleOther = () => {
-      const isOther = vehicleTypeSelect.value === "Other";
+      const isOther = isOtherVehicleType(vehicleTypeSelect.value);
       vehicleTypeOther.classList.toggle("hidden", !isOther);
       const input = vehicleTypeOther.querySelector("input");
       if (input) {
@@ -1594,7 +1505,7 @@ const initFormStepper = () => {
     });
     isApplyingFormMemory = false;
     if (vehicleTypeOther) {
-      const isOther = vehicleTypeSelect?.value === "Other";
+      const isOther = isOtherVehicleType(vehicleTypeSelect?.value);
       vehicleTypeOther.classList.toggle("hidden", !isOther);
     }
     updateLengthRequirement();
@@ -1639,6 +1550,59 @@ const initFormStepper = () => {
   updateInsuranceExpirationWarning();
   updateContactPrefillFromContract();
 
+  collectContractVehiclePayload = () => {
+    const formEntries = new FormData(form);
+    const data = Object.fromEntries(formEntries.entries());
+    return buildVehicleRequestPayload(data);
+  };
+
+  resetContractVehicleFields = () => {
+    const resetFields = [
+      "vehicleType",
+      "vehicleTypeOther",
+      "vehicleBrand",
+      "vehicleModel",
+      "vehicleColour",
+      "vehicleLength",
+      "vehicleYear",
+      "vehiclePlate",
+      "vehicleProv",
+      "insuranceCompany",
+      "insurancePolicy",
+      "insuranceExpiration",
+    ];
+    resetFields.forEach((name) => {
+      const field = form.elements[name];
+      if (!field) return;
+      field.value = "";
+    });
+    const batteryField = form.elements.battery;
+    if (batteryField && batteryField.type === "checkbox") {
+      batteryField.checked = false;
+    }
+    if (propaneCheckbox) {
+      propaneCheckbox.checked = false;
+    }
+    if (vehicleTypeOther) {
+      vehicleTypeOther.classList.add("hidden");
+      const input = vehicleTypeOther.querySelector("input");
+      if (input) {
+        input.required = false;
+      }
+    }
+    updateLengthRequirement();
+    updatePropaneAvailability();
+    updateEstimatedCost();
+    updateInsuranceExpirationWarning();
+  };
+
+  refreshContractEstimate = () => {
+    updateLengthRequirement();
+    updatePropaneAvailability();
+    updateEstimatedCost();
+    updateInsuranceExpirationWarning();
+  };
+
   syncContractHelperLanguage = () => {
     populateSeasonSelect();
     populateVehicleTypeOptions();
@@ -1652,16 +1616,27 @@ const initFormStepper = () => {
   };
 };
 
-const populateServicePrices = () => {
-  const servicePriceEls = document.querySelectorAll("[data-service-price]");
-  if (!servicePriceEls.length) return;
+const populateServicePriceElements = (root = document) => {
+  const scope = root?.querySelectorAll
+    ? root
+    : document;
+  const servicePriceEls = scope.querySelectorAll
+    ? scope.querySelectorAll("[data-service-price]")
+    : [];
   servicePriceEls.forEach((el) => {
     const key = el.dataset.servicePrice;
     const amount = SERVICE_PRICES[key];
-    if (typeof amount === "number") {
-      el.textContent = formatCurrency(amount);
+    if (typeof amount !== "number") {
+      throw new Error(
+        `Unable to display service price: missing "${key}" code in generated data.`,
+      );
     }
+    el.textContent = formatCurrency(amount);
   });
+};
+
+const populateServicePrices = () => {
+  populateServicePriceElements(document);
 };
 
 const updateContractDownloadLink = () => {
@@ -1672,6 +1647,28 @@ const updateContractDownloadLink = () => {
   if (filename) {
     contractDownloadLink.download = filename;
   }
+};
+
+const serializeFileAttachments = async (fileList) => {
+  if (!fileList || !fileList.length) return [];
+  const files = Array.isArray(fileList) ? fileList : Array.from(fileList);
+  const encodeFile = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : "";
+        const [, base64 = ""] = result.split(",");
+        resolve({
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+          content: base64,
+        });
+      };
+      reader.onerror = () =>
+        reject(reader.error || new Error(`Failed to read file: ${file.name}`));
+      reader.readAsDataURL(file);
+    });
+  return Promise.all(files.map(encodeFile));
 };
 
 const updateContactEmails = () => {
@@ -1686,236 +1683,528 @@ const updateContactEmails = () => {
 
 const handleContactForm = () => {
   const form = document.getElementById("contact-form");
-  if (!form) return;
+  if (!form) {
+    attachContractPdfToContactForm = null;
+    return;
+  }
 
   const attachmentInput = form.querySelector('input[name="attachments"]');
   const attachmentTrigger = form.querySelector("[data-attachment-trigger]");
   const attachmentList = form.querySelector("[data-attachment-list]");
+  const submitButton = form.querySelector('button[type="submit"]');
+  const statusEl = form.querySelector("[data-contact-status]");
+  const recaptchaContainer = form.querySelector("[data-recaptcha-container]");
+  const contactSeasonSelect = form.querySelector("[data-contact-season-select]");
+  const contactVehicleSelect = form.querySelector("[data-contact-vehicle-select]");
+
+  populateSeasonOptionsForSelect(contactSeasonSelect);
+  populateVehicleOptionsForSelect(contactVehicleSelect);
+  syncContactFormLanguage = () => {
+    populateSeasonOptionsForSelect(contactSeasonSelect);
+    populateVehicleOptionsForSelect(contactVehicleSelect);
+  };
+
+  let attachmentFiles = [];
 
   const updateAttachmentList = () => {
-    if (!attachmentList || !attachmentInput) return;
-    const files = [...attachmentInput.files];
+    if (!attachmentList) return;
     attachmentList.innerHTML = "";
-    if (!files.length) {
+    if (!attachmentFiles.length) {
       attachmentList.hidden = true;
       return;
     }
-    files.forEach((file) => {
-      const item = document.createElement("li");
-      item.textContent = file.name;
-      attachmentList.appendChild(item);
+    attachmentFiles.forEach((file, index) => {
+      const li = document.createElement("li");
+      li.classList.add("file-upload__item");
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = file.name;
+      li.appendChild(nameSpan);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "file-upload__remove";
+      removeBtn.dataset.attachmentRemove = index;
+      removeBtn.setAttribute("aria-label", `Remove ${file.name}`);
+      removeBtn.innerHTML = "&times;";
+      li.appendChild(removeBtn);
+
+      attachmentList.appendChild(li);
     });
     attachmentList.hidden = false;
+  };
+
+  const addAttachments = (files) => {
+    const list = Array.isArray(files) ? files : [files];
+    const validFiles = list.filter((file) => file instanceof File);
+    if (!validFiles.length) return false;
+    attachmentFiles = attachmentFiles.concat(validFiles);
+    updateAttachmentList();
+    return true;
+  };
+
+  const setContactStatus = (message, type = "info") => {
+    if (!statusEl) return;
+    statusEl.textContent = message || "";
+    statusEl.dataset.status = type;
+    statusEl.hidden = !message;
+  };
+
+  const updateContactSubmitState = () => {
+    if (!submitButton) return;
+    submitButton.disabled =
+      isRecaptchaConfigured() && !getRecaptchaToken(recaptchaContainer);
+  };
+
+  configureRecaptchaWidget(recaptchaContainer, {
+    onChange: updateContactSubmitState,
+    onExpired: updateContactSubmitState,
+  });
+  updateContactSubmitState();
+
+  const removeAttachmentAt = (index) => {
+    const idx = Number(index);
+    if (Number.isNaN(idx) || idx < 0 || idx >= attachmentFiles.length) return;
+    attachmentFiles.splice(idx, 1);
+    updateAttachmentList();
   };
 
   if (attachmentTrigger && attachmentInput) {
     attachmentTrigger.addEventListener("click", () => attachmentInput.click());
   }
   if (attachmentInput) {
-    attachmentInput.addEventListener("change", updateAttachmentList);
+    attachmentInput.addEventListener("change", () => {
+      if (!attachmentInput.files?.length) return;
+      addAttachments([...attachmentInput.files]);
+      attachmentInput.value = "";
+    });
+  }
+  if (attachmentList) {
+    attachmentList.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-attachment-remove]");
+      if (!target) return;
+      removeAttachmentAt(target.dataset.attachmentRemove);
+    });
   }
 
-  form.addEventListener("submit", (event) => {
+  attachContractPdfToContactForm = (file) => {
+    if (!file) return false;
+    let normalized = null;
+    if (file instanceof File) {
+      normalized = file;
+    } else if (file instanceof Blob) {
+      normalized = new File(
+        [file],
+        `contract-${Date.now()}.pdf`,
+        { type: file.type || "application/pdf" },
+      );
+    }
+    if (!normalized) return false;
+    const added = addAttachments([normalized]);
+    if (added) {
+      setContactStatus(
+        getTranslation("contactForm.status.attachmentAdded"),
+        "info",
+      );
+      document.getElementById("contact-form")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+    return added;
+  };
+
+  setupRecaptchaWidget(recaptchaContainer);
+
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(form);
     const nameInput = (data.get("name") || "").trim();
     const email = (data.get("email") || "").trim();
+    const seasonInput = (data.get("season") || "").trim();
     const vehicleInput = (data.get("vehicle") || "").trim();
     const message = (data.get("message") || "").trim();
-    const attachmentNames =
-      attachmentInput && attachmentInput.files
-        ? [...attachmentInput.files].map((file) => file.name)
-        : [];
     const readableName =
       nameInput || getTranslation("contactForm.inquiryFallback");
-    const vehicleDisplay =
-      vehicleInput || getTranslation("contactForm.vehicleFallback");
+    const vehicleDisplay = getVehicleLabelForLanguage(vehicleInput);
+    const seasonDisplay =
+      getSeasonLabelForLanguage(seasonInput) ||
+      getTranslation("contactForm.seasonFallback");
 
     const subjectTemplate = getTranslation("contactForm.subject");
-    const subject = encodeURIComponent(
-      formatTemplate(subjectTemplate, { name: readableName }),
+    const fallbackSubject = encodeURIComponent(
+      formatTemplate(subjectTemplate, {
+        vehicle: vehicleDisplay,
+        season: seasonDisplay,
+      }),
     );
     const bodyLines = [
       `${getTranslation("contactForm.bodyName")}: ${readableName}`,
       `${getTranslation("contactForm.bodyEmail")}: ${email}`,
       `${getTranslation("contactForm.bodyVehicle")}: ${vehicleDisplay}`,
+      `${getTranslation("contactForm.bodySeason")}: ${seasonDisplay}`,
     ];
+    const attachmentNames = attachmentFiles.map((file) => file.name);
     if (attachmentNames.length) {
       bodyLines.push(
         `${getTranslation("contactForm.attachments.note")}: ${attachmentNames.join(", ")}`,
       );
     }
     bodyLines.push("", message);
+    const bodyText = bodyLines.join("\n");
+    const fallbackBody = encodeURIComponent(bodyText);
+    const fallbackSend = () => {
+      window.location.href = `mailto:${getContactEmail()}?subject=${fallbackSubject}&body=${fallbackBody}`;
+    };
+    console.debug("[contact] submit captured", {
+      readableName,
+      vehicleDisplay,
+      attachmentCount: attachmentFiles.length,
+    });
 
-    const body = encodeURIComponent(bodyLines.join("\n"));
-    window.location.href = `mailto:${getContactEmail()}?subject=${subject}&body=${body}`;
+    let recaptchaToken = "";
+    if (isRecaptchaConfigured()) {
+      console.debug("[contact] reCAPTCHA enabled, checking widget readiness");
+      if (!isRecaptchaWidgetReady(recaptchaContainer)) {
+        console.warn("[contact] reCAPTCHA widget not ready");
+        setContactStatus(
+          getTranslation("contactForm.captcha.unavailable"),
+          "error",
+        );
+        return;
+      }
+      recaptchaToken = getRecaptchaToken(recaptchaContainer);
+      if (!recaptchaToken) {
+        console.warn("[contact] reCAPTCHA token missing");
+        setContactStatus(getTranslation("contactForm.captcha.error"), "error");
+        return;
+      }
+      console.debug("[contact] reCAPTCHA token acquired", {
+        tokenLength: recaptchaToken.length,
+      });
+    } else {
+      console.debug("[contact] reCAPTCHA not configured; continuing without token");
+    }
+
+    if (submitButton) submitButton.disabled = true;
+    setContactStatus(getTranslation("contactForm.status.sending"), "info");
+
+    try {
+      const attachmentsPayload =
+        attachmentFiles.length > 0
+          ? await serializeFileAttachments(attachmentFiles)
+          : [];
+      if (!sendEmailCallable) {
+        throw new Error("sendEmail callable unavailable");
+      }
+      const payload = {
+        to: getContactEmail(),
+        from: getContactFromAddress(),
+        replyTo: email || CONTACT_EMAILS.default,
+        subject: formatTemplate(subjectTemplate, {
+          vehicle: vehicleDisplay,
+          season: seasonDisplay,
+        }),
+        text: bodyText,
+        attachments: attachmentsPayload,
+      };
+      if (recaptchaToken) {
+        payload.captchaToken = recaptchaToken;
+      }
+      console.debug("[contact] invoking sendEmail", {
+        to: payload.to,
+        from: payload.from,
+        includeCaptcha: Boolean(recaptchaToken),
+      });
+      await sendEmailCallable(payload);
+      setContactStatus(getTranslation("contactForm.status.success"), "success");
+      form.reset();
+      attachmentFiles = [];
+      updateAttachmentList();
+    } catch (err) {
+      console.error("Contact form send failed", err);
+      setContactStatus(getTranslation("contactForm.status.error"), "error");
+      if (DISABLE_MAILTO_FALLBACK) {
+        console.warn(
+          "[contact] Mailto fallback suppressed for debugging; compose email manually if needed.",
+        );
+      } else {
+        fallbackSend();
+      }
+    } finally {
+      resetRecaptchaWidget(recaptchaContainer);
+      if (submitButton) {
+        submitButton.disabled = false;
+        updateContactSubmitState();
+      }
+    }
   });
 };
 
 const handleContractHelper = () => {
   const form = document.getElementById("contract-helper");
-  if (!form || !window.PDFLib) return;
+  if (!form) return;
 
-  const previewModal = document.getElementById("contract-preview-modal");
-  const previewFrame = document.getElementById("contract-preview-frame");
-  const previewStatus = document.getElementById("contract-preview-status");
-  const previewDownloadBtn = document.querySelector("[data-preview-download]");
-  const previewCloseElements = document.querySelectorAll(
-    "[data-preview-close]",
-  );
-  const signingInfoTrigger = document.querySelector(
-    "[data-signing-info-trigger]",
-  );
-  const signingInfoPopover = document.querySelector("[data-signing-info]");
-  let previewUrl = null;
-  let previewFilename = "";
+  const submitButton = form.querySelector('button[type="submit"]');
+  const statusEl = form.querySelector("[data-contract-status]");
+  const addVehicleButton = form.querySelector("[data-add-vehicle]");
+  const resetRequestButton = form.querySelector("[data-request-reset]");
+  const requestList = form.querySelector("[data-request-vehicle-list]");
+  const requestEmpty = form.querySelector("[data-request-empty]");
+  const requestCount = form.querySelector("[data-request-count]");
+  const recaptchaContainer = form.querySelector("[data-request-recaptcha-container]");
+  let queuedRequests = [];
+  let hasSubmitted = false;
 
-  const cleanupPreviewUrl = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      previewUrl = null;
+  const updateRequestSubmitState = () => {
+    if (!submitButton || hasSubmitted) return;
+    submitButton.disabled =
+      isRecaptchaConfigured() && !getRecaptchaToken(recaptchaContainer);
+  };
+
+  configureRecaptchaWidget(recaptchaContainer, {
+    onChange: updateRequestSubmitState,
+    onExpired: updateRequestSubmitState,
+  });
+  updateRequestSubmitState();
+
+  const setContractStatus = (message, type = "info") => {
+    if (!statusEl) return;
+    statusEl.textContent = message || "";
+    statusEl.dataset.status = type;
+    statusEl.hidden = !message;
+  };
+
+  const formatVehicleSummary = (payload) => {
+    if (!payload) return "";
+    const parts = [];
+    const typeLabel = payload.vehicleTypeLabel || payload.vehicleType || "";
+    if (typeLabel) parts.push(typeLabel);
+    if (payload.vehicleLength) {
+      const unit = currentLanguage === "fr" ? "pi" : "ft";
+      parts.push(`${payload.vehicleLength} ${unit}`);
     }
-  };
-
-  const updatePreviewActions = (enabled) => {
-    if (previewDownloadBtn) {
-      previewDownloadBtn.disabled = !enabled;
+    if (payload.vehiclePlate) {
+      const provinceSuffix = payload.vehicleProv ? ` (${payload.vehicleProv})` : "";
+      parts.push(`${payload.vehiclePlate}${provinceSuffix}`);
+    } else if (payload.vehicleProv) {
+      parts.push(payload.vehicleProv);
     }
+    const addons = [];
+    if (payload.battery) addons.push(getTranslation("form.service.battery"));
+    if (payload.propane) addons.push(getTranslation("form.service.propane"));
+    if (addons.length) {
+      parts.push(addons.join(" + "));
+    }
+    return parts.filter(Boolean).join(" • ");
   };
 
-  const triggerDownload = (url, filename) => {
-    if (!url) return;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename || "colle-storage.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const toggleSigningPopover = (show) => {
-    if (!signingInfoPopover) return;
-    signingInfoPopover.hidden = !show;
-  };
-
-  if (signingInfoTrigger && signingInfoPopover) {
-    let popoverVisible = false;
-    signingInfoTrigger.addEventListener("click", (event) => {
-      event.stopPropagation();
-      popoverVisible = !popoverVisible;
-      toggleSigningPopover(popoverVisible);
+  const renderQueue = () => {
+    if (!requestList) return;
+    requestList.innerHTML = "";
+    queuedRequests.forEach((request, index) => {
+      const item = document.createElement("li");
+      item.className = "request-queue__item";
+      const summary = document.createElement("span");
+      summary.textContent = formatVehicleSummary(request);
+      item.appendChild(summary);
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "request-queue__remove";
+      removeButton.dataset.requestRemove = String(index);
+      removeButton.textContent = getTranslation("form.queue.remove");
+      item.appendChild(removeButton);
+      requestList.appendChild(item);
     });
-    if (previewModal) {
-      previewModal.addEventListener("click", (event) => {
-        if (!popoverVisible) return;
-        if (
-          event.target !== signingInfoTrigger &&
-          !signingInfoPopover.contains(event.target)
-        ) {
-          popoverVisible = false;
-          toggleSigningPopover(false);
-        }
-      });
+    if (requestEmpty) {
+      requestEmpty.hidden = queuedRequests.length > 0;
     }
-  }
+    if (requestCount) {
+      requestCount.textContent = queuedRequests.length
+        ? `(${queuedRequests.length})`
+        : "";
+    }
+  };
 
-  const showPreview = ({ url, filename }) => {
-    if (!url) return;
-    if (!previewModal || !previewFrame) {
-      triggerDownload(url, filename);
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+  const addCurrentVehicleToQueue = () => {
+    const payload =
+      typeof collectContractVehiclePayload === "function"
+        ? collectContractVehiclePayload()
+        : null;
+    if (!payload || !payload.vehicleType) {
+      setContractStatus(getTranslation("form.queue.missingVehicle"), "error");
       return;
     }
-    cleanupPreviewUrl();
-    previewUrl = url;
-    previewFilename = filename;
-    previewFrame.src = url;
-    previewModal.classList.remove("hidden");
-    previewModal.setAttribute("aria-hidden", "false");
-    updatePreviewActions(true);
-    if (previewStatus) {
-      previewStatus.textContent = formatTemplate(
-        getTranslation("modal.readyStatus"),
-        { filename },
-      );
+    queuedRequests.push(payload);
+    if (typeof resetContractVehicleFields === "function") {
+      resetContractVehicleFields();
     }
-    try {
-      previewFrame.focus({ preventScroll: true });
-    } catch (err) {
-      // no-op
-    }
+    renderQueue();
+    setContractStatus(getTranslation("form.queue.added"), "success");
   };
 
-  const closePreview = () => {
-    if (!previewModal) return;
-    previewModal.classList.add("hidden");
-    previewModal.setAttribute("aria-hidden", "true");
-    if (previewFrame) {
-      previewFrame.src = "about:blank";
-    }
-    toggleSigningPopover(false);
-  };
-
-  if (previewDownloadBtn) {
-    previewDownloadBtn.addEventListener("click", () => {
-      if (!previewUrl) return;
-      triggerDownload(previewUrl, previewFilename);
-      closePreview();
+  if (addVehicleButton) {
+    addVehicleButton.addEventListener("click", () => {
+      if (hasSubmitted) return;
+      addCurrentVehicleToQueue();
     });
   }
 
-  previewCloseElements.forEach((el) =>
-    el.addEventListener("click", () => {
-      closePreview();
-    }),
-  );
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closePreview();
-    }
-  });
-  if (previewModal) {
-    previewModal.addEventListener("click", (event) => {
-      if (event.target === previewModal) {
-        closePreview();
-      }
+  if (requestList) {
+    requestList.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-request-remove]");
+      if (!target) return;
+      const index = Number(target.dataset.requestRemove);
+      if (Number.isNaN(index)) return;
+      queuedRequests.splice(index, 1);
+      renderQueue();
     });
   }
 
-  window.addEventListener("beforeunload", cleanupPreviewUrl);
-  updatePreviewActions(false);
-
-  const enhanceBlankContractDownload = () => {
-    if (!contractDownloadLink) return;
-    if (contractDownloadLink.dataset.enhanced === "true") return;
-    contractDownloadLink.dataset.enhanced = "true";
-    contractDownloadLink.addEventListener("click", async (event) => {
-      event.preventDefault();
-      try {
-        const { url, filename } = await buildBlankContractWithPolicies(
-          currentLanguage,
-        );
-        triggerDownload(url, filename || contractDownloadLink.download);
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-      } catch (err) {
-        console.error("Unable to append policy page to blank contract", err);
-        window.open(contractDownloadLink.href, "_blank", "noopener");
+  if (resetRequestButton) {
+    resetRequestButton.addEventListener("click", () => {
+      queuedRequests = [];
+      hasSubmitted = false;
+      form.reset();
+      setContractStatus("", "info");
+      if (submitButton) {
+        submitButton.disabled = false;
+        updateRequestSubmitState();
       }
+      if (addVehicleButton) {
+        addVehicleButton.disabled = false;
+      }
+      resetRequestButton.classList.add("hidden");
+      if (typeof syncContractHelperLanguage === "function") {
+        syncContractHelperLanguage();
+      }
+      renderQueue();
     });
-  };
-  enhanceBlankContractDownload();
+  }
+
+  renderQueue();
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formEntries = new FormData(form);
     formEntries.set("formLanguage", currentLanguage);
     const formData = Object.fromEntries(formEntries.entries());
+    if (hasSubmitted) {
+      return;
+    }
+    if (!createStorageRequestsCallable && !createStorageRequestCallable) {
+      setContractStatus(getTranslation("form.requestStatus.unavailable"), "error");
+      return;
+    }
+
+    const tenantPayload = buildTenantPayload(formData);
+    tenantPayload.seasonLabel = getSeasonLabelForLanguage(tenantPayload.season);
+    const currentRequest = buildVehicleRequestPayload(formData);
+    const requests = queuedRequests.slice();
+    if (currentRequest.vehicleType) {
+      requests.push(currentRequest);
+    }
+    if (!requests.length) {
+      setContractStatus(getTranslation("form.queue.missingVehicle"), "error");
+      return;
+    }
+
+    const payload = {
+      tenant: tenantPayload,
+      requests: requests.map((request) => ({
+        ...request,
+        season: tenantPayload.season,
+        seasonLabel: tenantPayload.seasonLabel || request.seasonLabel || "",
+      })),
+    };
+
+    let recaptchaToken = "";
+    if (isRecaptchaConfigured()) {
+      if (!isRecaptchaWidgetReady(recaptchaContainer)) {
+        setContractStatus(getTranslation("form.captcha.unavailable"), "error");
+        return;
+      }
+      recaptchaToken = getRecaptchaToken(recaptchaContainer);
+      if (!recaptchaToken) {
+        setContractStatus(getTranslation("form.captcha.error"), "error");
+        return;
+      }
+      payload.captchaToken = recaptchaToken;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+    setContractStatus(getTranslation("form.requestStatus.sending"), "info");
+
     try {
-      const payload = await generateContractPdf(formData);
-      showPreview(payload);
+      let response = null;
+      if (createStorageRequestsCallable) {
+        try {
+          response = await createStorageRequestsCallable(payload);
+        } catch (err) {
+          const code = err?.code || "";
+          const message = err?.message || "";
+          const isUnimplemented =
+            code === "functions/unimplemented" ||
+            code === "functions/not-found" ||
+            code === "unimplemented" ||
+            code === "not-found" ||
+            message.includes("UNIMPLEMENTED") ||
+            message.toLowerCase().includes("not found");
+          if (!isUnimplemented) {
+            throw err;
+          }
+        }
+      }
+
+      if (!response) {
+        if (!createStorageRequestCallable) {
+          throw new Error("Request service unavailable");
+        }
+        if (requests.length !== 1) {
+          throw new Error("Multi-vehicle requests are not available yet.");
+        }
+        const singleRequest = requests[0];
+        const flatPayload = {
+          ...tenantPayload,
+          ...singleRequest,
+          season: tenantPayload.season,
+        };
+        if (recaptchaToken) {
+          flatPayload.captchaToken = recaptchaToken;
+        }
+        response = await createStorageRequestCallable(flatPayload);
+      }
+
+      const confirmationCode =
+        response?.data?.confirmationCode || response?.data?.requestId || "";
+      const successTemplate = confirmationCode
+        ? getTranslation("form.requestStatus.success")
+        : getTranslation("form.requestStatus.successNoCode");
+      const successMessage = formatTemplate(successTemplate, {
+        confirmation: confirmationCode,
+        email: tenantPayload.email || "",
+      });
+      setContractStatus(successMessage, "success");
+      hasSubmitted = true;
+      if (addVehicleButton) {
+        addVehicleButton.disabled = true;
+      }
+      if (resetRequestButton) {
+        resetRequestButton.classList.remove("hidden");
+      }
     } catch (err) {
-      console.error("Unable to generate PDF", err);
-      alert(getMessage("messages.pdfError"));
+      console.error("Unable to submit storage request", err);
+      const message =
+        formatRequestError(err) || getTranslation("form.requestStatus.error");
+      setContractStatus(message, "error");
+    } finally {
+      if (submitButton && !hasSubmitted) {
+        submitButton.disabled = false;
+      }
+      resetRecaptchaWidget(recaptchaContainer);
+      updateRequestSubmitState();
     }
   });
 };
@@ -2193,7 +2482,7 @@ const buildBlankContractWithPolicies = async (lang = currentLanguage) => {
   const url = URL.createObjectURL(blob);
   const templateName = templateUrl.split("/").pop() || `contract-${lang}.pdf`;
   const filename = templateName.replace(/\.pdf$/i, "-policies.pdf");
-  return { url, filename };
+  return { url, filename, blob };
 };
 
 const generateContractPdf = async (data) => {
@@ -2415,6 +2704,7 @@ const applyTranslationsForLanguage = (lang) => {
     }
     if (el.dataset.i18nHtml === "true") {
       el.innerHTML = translation;
+      populateServicePriceElements(el);
       return;
     }
     el.textContent = translation;
@@ -2433,6 +2723,7 @@ const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
   const normalized = SUPPORTED_LANGUAGES.includes(lang)
     ? lang
     : DEFAULT_LANGUAGE;
+  const previousLanguage = currentLanguage;
   currentLanguage = normalized;
   document.documentElement.lang = currentLanguage;
   if (!skipPersist) {
@@ -2446,7 +2737,11 @@ const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
   updateContractDownloadLink();
   updateContactEmails();
   syncContractHelperLanguage();
+  syncContactFormLanguage();
   updateLanguageToggleState();
+  if (previousLanguage !== currentLanguage) {
+    refreshRecaptchaForLanguage();
+  }
   if (!skipUrlSync) {
     clearLanguageIndicators();
   }
@@ -2504,15 +2799,21 @@ const getLanguageFromUrl = () => {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  initFormStepper();
-  handleContactForm();
-  handleContractHelper();
   const urlLanguageRaw = getLanguageFromUrl();
   const storedLanguage = getStoredLanguage();
   const urlLanguage = storedLanguage ? null : urlLanguageRaw;
   const hostLanguage = getLanguageFromHostname();
   const initialLanguage =
     storedLanguage || urlLanguage || hostLanguage || DEFAULT_LANGUAGE;
+
+  currentLanguage = initialLanguage;
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = currentLanguage;
+  }
+
+  initFormStepper();
+  handleContactForm();
+  handleContractHelper();
   clearLanguageIndicators();
   applyLanguage(initialLanguage, {
     skipPersist: !urlLanguage,
