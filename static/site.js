@@ -473,7 +473,6 @@ const LENGTH_REQUIRED_TYPE_SLUGS = new Set([
 
 const CONTRACT_FORM_MEMORY_PREFIX = "contract-helper-vehicle-";
 const CONTRACT_FORM_MEMORY_FIELDS = [
-  "email",
   "vehicleType",
   "vehicleTypeOther",
   "vehicleBrand",
@@ -488,6 +487,7 @@ const CONTRACT_FORM_MEMORY_FIELDS = [
   "battery",
   "propane",
 ];
+const CONTRACT_FORM_IGNORED_MEMORY_FIELDS = new Set(["email"]);
 
 const getVehicleStorageKey = (type) => {
   if (!type) return null;
@@ -1312,6 +1312,7 @@ const initFormStepper = () => {
     if (!entries.length) return;
     isApplyingFormMemory = true;
     entries.forEach(([name, value]) => {
+      if (CONTRACT_FORM_IGNORED_MEMORY_FIELDS.has(name)) return;
       const field = form.elements[name];
       if (!field) return;
       if (field.type === "checkbox") {
