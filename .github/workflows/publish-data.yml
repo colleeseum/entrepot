@@ -1,0 +1,173 @@
+name: Publish data
+
+on:
+  workflow_dispatch: {}
+  repository_dispatch:
+    types:
+      - tracker-content-publish
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: publish-site-data
+  cancel-in-progress: false
+
+jobs:
+  export-and-commit:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Report job started
+        if: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        env:
+          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
+          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
+          PUBLISH_ID: ${{ github.event.client_payload.publishId }}
+          REQUESTED_BY: ${{ github.event.client_payload.requestedBy }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
+          curl -sS -X POST "${CALLBACK_URL}" \
+            -H "Content-Type: application/json" \
+            -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
+            -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"workflow_started\",\"details\":{\"requestedBy\":\"${REQUESTED_BY}\"}}"
+        shell: bash
+
+      - name: Checkout Entrepot
+        uses: actions/checkout@v4
+
+      - name: Checkout Tracker exporter
+        uses: actions/checkout@v4
+        with:
+          repository: colleeseum/tracker
+          path: tracker
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tracker/functions/package-lock.json
+
+      - name: Install Tracker functions deps
+        run: npm ci
+        working-directory: tracker/functions
+
+      - name: Write Firebase service account key
+        run: |
+          set -euo pipefail
+          mkdir -p .secrets
+          cat > .secrets/firebase-service-account.json <<'EOF'
+          ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          EOF
+        shell: bash
+
+      - name: Export website text from Firestore
+        env:
+          FIREBASE_PROFILE: prod
+          USE_FIRESTORE_EMULATOR: "false"
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/.secrets/firebase-service-account.json
+        run: node tracker/functions/scripts/export-site-data.mjs --out ./static/generated/website-text.generated.js
+
+      - name: Report export done
+        if: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        env:
+          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
+          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
+          PUBLISH_ID: ${{ github.event.client_payload.publishId }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
+          curl -sS -X POST "${CALLBACK_URL}" \
+            -H "Content-Type: application/json" \
+            -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
+            -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"export_done\",\"details\":null}"
+        shell: bash
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- ./static/generated/website-text.generated.js; then
+            echo "No changes to commit."
+            PUBLISH_ID="${{ github.event.client_payload.publishId }}"
+            if [ -n "${PUBLISH_ID}" ] && [ -n "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" ]; then
+              curl -sS -X POST "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" \
+                -H "Content-Type: application/json" \
+                -H "x-tracker-callback-token: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}" \
+                -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"no_changes\",\"details\":null}"
+            fi
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ./static/generated/website-text.generated.js
+          PUBLISH_ID="${{ github.event.client_payload.publishId }}"
+          REQUESTED_BY="${{ github.event.client_payload.requestedBy }}"
+          if [ -z "${PUBLISH_ID}" ]; then
+            git commit -m "[data-publish] Update website text"
+          else
+            git commit -m "[data-publish] Update website text (publish ${PUBLISH_ID})" -m "Requested by: ${REQUESTED_BY}"
+          fi
+          COMMIT_SHA="$(git rev-parse HEAD)"
+          git push
+
+          if [ -n "${PUBLISH_ID}" ] && [ -n "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" ]; then
+            curl -sS -X POST "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" \
+              -H "Content-Type: application/json" \
+              -H "x-tracker-callback-token: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}" \
+              -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"commit_pushed\",\"details\":{\"commitSha\":\"${COMMIT_SHA}\"}}"
+          fi
+        shell: bash
+
+      - name: Report deploy started
+        if: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        env:
+          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
+          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
+          PUBLISH_ID: ${{ github.event.client_payload.publishId }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
+          curl -sS -X POST "${CALLBACK_URL}" \
+            -H "Content-Type: application/json" \
+            -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
+            -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"deploy_started\",\"details\":null}"
+        shell: bash
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Report workflow done
+        if: ${{ always() && secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        env:
+          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
+          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
+          PUBLISH_ID: ${{ github.event.client_payload.publishId }}
+          JOB_STATUS: ${{ job.status }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
+          if [ "${JOB_STATUS}" = "success" ]; then
+            STATUS="deploy_succeeded"
+          else
+            STATUS="deploy_failed"
+          fi
+          curl -sS -X POST "${CALLBACK_URL}" \
+            -H "Content-Type: application/json" \
+            -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
+            -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"${STATUS}\",\"details\":{\"jobStatus\":\"${JOB_STATUS}\",\"pageUrl\":\"${PAGE_URL}\"}}"
+        shell: bash
