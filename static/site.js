@@ -77,7 +77,7 @@ const DEBUG_I18N_KEYS =
     }
   })();
 
-const EDIT_I18N =
+let EDIT_I18N =
   typeof window !== "undefined" &&
   (() => {
     if (!IS_STAGING_PAGE) return false;
@@ -94,9 +94,17 @@ const EDIT_I18N =
 
 const STAGING_ALLOWED_EMAILS = new Set(["sergecolle@gmail.com", "arcolle@gmail.com"]);
 
-if (typeof document !== "undefined" && EDIT_I18N) {
-  document.documentElement.dataset.i18nEdit = "true";
-}
+const syncI18nEditRootState = () => {
+  if (typeof document === "undefined") return;
+  if (EDIT_I18N) {
+    document.documentElement.dataset.i18nEdit = "true";
+  } else {
+    delete document.documentElement.dataset.i18nEdit;
+    delete document.documentElement.dataset.i18nEditCount;
+  }
+};
+
+syncI18nEditRootState();
 
 if (typeof window !== "undefined") {
   window.__ENTREPOT_STAGING_FLAGS__ = {
@@ -1078,6 +1086,15 @@ const showI18nToast = (message) => {
   }, 1400);
 };
 
+const removeI18nEditAffordances = () => {
+  if (typeof document === "undefined") return;
+  document.querySelectorAll(".i18n-edit-button").forEach((button) => button.remove());
+  document.querySelectorAll("[data-i18n-edit-attached], [data-i18n-edit-click-attached]").forEach((el) => {
+    delete el.dataset.i18nEditAttached;
+    delete el.dataset.i18nEditClickAttached;
+  });
+};
+
 const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -1102,13 +1119,23 @@ const renderStagingModeToggle = () => {
     EDIT_I18N ? "Switch staging preview to view mode" : "Switch staging preview to edit mode",
   );
   button.addEventListener("click", () => {
+    EDIT_I18N = !EDIT_I18N;
+    syncI18nEditRootState();
     const url = new URL(window.location.href);
+    if (EDIT_I18N) url.searchParams.set("edit", "1");
+    else url.searchParams.delete("edit");
+    window.history.replaceState({}, "", url.toString());
+    window.__ENTREPOT_STAGING_FLAGS__ = {
+      ...(window.__ENTREPOT_STAGING_FLAGS__ || {}),
+      edit: EDIT_I18N,
+      search: window.location.search || "",
+    };
     if (EDIT_I18N) {
-      url.searchParams.delete("edit");
+      applyTranslationsForLanguage(currentLanguage);
     } else {
-      url.searchParams.set("edit", "1");
+      removeI18nEditAffordances();
     }
-    window.location.assign(url.toString());
+    renderStagingModeToggle();
   });
   document.body.appendChild(button);
 };
@@ -3318,11 +3345,30 @@ const bootEntrepotSite = () => {
         return email && STAGING_ALLOWED_EMAILS.has(email);
       };
 
+      showStagingGate({
+        message: "Checking staging access...",
+        actions: false,
+      });
+
       const signedInUser = await new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        let latestUser = firebaseAuth.currentUser || null;
+        let settled = false;
+        let timeoutId = null;
+        let unsubscribe = () => {};
+        const finish = (user) => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId) window.clearTimeout(timeoutId);
           unsubscribe();
           resolve(user || null);
+        };
+        unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+          latestUser = user || null;
+          if (latestUser) {
+            finish(latestUser);
+          }
         });
+        timeoutId = window.setTimeout(() => finish(latestUser), 1800);
       });
 
       const user = signedInUser || currentUser;
