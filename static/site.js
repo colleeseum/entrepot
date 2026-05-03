@@ -91,6 +91,7 @@ let EDIT_I18N =
       return false;
     }
   })();
+let stagingRefreshHandler = null;
 
 const STAGING_ALLOWED_EMAILS = new Set(["sergecolle@gmail.com", "arcolle@gmail.com"]);
 
@@ -1106,13 +1107,39 @@ const copyToClipboard = async (text) => {
 
 const renderStagingModeToggle = () => {
   if (typeof document === "undefined" || !IS_STAGING_PAGE) return;
-  const existing = document.getElementById("staging-mode-toggle");
+  const existing = document.getElementById("staging-preview-controls");
   if (existing) existing.remove();
+
+  const controls = document.createElement("div");
+  controls.id = "staging-preview-controls";
+  controls.className = "staging-preview-controls";
+
+  const refreshButton = document.createElement("button");
+  refreshButton.id = "staging-refresh";
+  refreshButton.type = "button";
+  refreshButton.className = "staging-control-button";
+  refreshButton.textContent = "Refresh";
+  refreshButton.setAttribute("aria-label", "Refresh staging content from Tracker");
+  refreshButton.addEventListener("click", async () => {
+    if (!stagingRefreshHandler) return;
+    refreshButton.disabled = true;
+    refreshButton.textContent = "Refreshing";
+    try {
+      await stagingRefreshHandler();
+      showI18nToast("Staging content refreshed.");
+    } catch (err) {
+      console.warn("Staging refresh failed", err);
+      showI18nToast(err?.message || "Refresh failed.");
+    } finally {
+      refreshButton.disabled = false;
+      refreshButton.textContent = "Refresh";
+    }
+  });
 
   const button = document.createElement("button");
   button.id = "staging-mode-toggle";
   button.type = "button";
-  button.className = "staging-mode-toggle";
+  button.className = "staging-control-button";
   button.textContent = EDIT_I18N ? "View" : "Edit";
   button.setAttribute(
     "aria-label",
@@ -1137,7 +1164,9 @@ const renderStagingModeToggle = () => {
     }
     renderStagingModeToggle();
   });
-  document.body.appendChild(button);
+  controls.appendChild(refreshButton);
+  controls.appendChild(button);
+  document.body.appendChild(controls);
 };
 
 const createPencilIcon = () => {
@@ -3332,7 +3361,7 @@ const bootEntrepotSite = () => {
       }
     };
 
-    const ensureStagingContent = async () => {
+    const ensureStagingContent = async ({ silent = false } = {}) => {
       if (!firebaseAuth) {
         throw new Error("Firebase Auth is not available.");
       }
@@ -3345,10 +3374,12 @@ const bootEntrepotSite = () => {
         return email && STAGING_ALLOWED_EMAILS.has(email);
       };
 
-      showStagingGate({
-        message: "Checking staging access...",
-        actions: false,
-      });
+      if (!silent) {
+        showStagingGate({
+          message: "Checking staging access...",
+          actions: false,
+        });
+      }
 
       const signedInUser = await new Promise((resolve) => {
         let latestUser = firebaseAuth.currentUser || null;
@@ -3437,10 +3468,12 @@ const bootEntrepotSite = () => {
         throw new Error("Not authorized.");
       }
 
-      showStagingGate({
-        message: `Signed in as ${user.email}. Loading staging content...`,
-        actions: false,
-      });
+      if (!silent) {
+        showStagingGate({
+          message: `Signed in as ${user.email}. Loading staging content...`,
+          actions: false,
+        });
+      }
 
       // Local dev: avoid callable cross-origin CORS issues by reading the emulator directly.
       if (IS_LOCALHOST) {
@@ -3503,7 +3536,9 @@ const bootEntrepotSite = () => {
           VEHICLE_TYPES,
           I18N: I18N_LOCAL,
         });
-        hideStagingGate();
+        if (!silent) {
+          hideStagingGate();
+        }
         return { pendingAuth: false };
       }
 
@@ -3516,11 +3551,23 @@ const bootEntrepotSite = () => {
         throw new Error("No staging content returned.");
       }
       setWebsiteContentPayload(payload);
-      hideStagingGate();
+      if (!silent) {
+        hideStagingGate();
+      }
       return { pendingAuth: false };
     };
 
     if (IS_STAGING_PAGE) {
+      stagingRefreshHandler = async () => {
+        const result = await ensureStagingContent({ silent: true });
+        if (result?.pendingAuth) return;
+        removeI18nEditAffordances();
+        applyLanguage(currentLanguage, {
+          skipPersist: true,
+          skipUrlSync: true,
+        });
+        renderStagingModeToggle();
+      };
       try {
         const result = await ensureStagingContent();
         if (result?.pendingAuth) {
