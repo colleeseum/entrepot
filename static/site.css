@@ -606,6 +606,11 @@ html[data-i18n-edit="true"] [data-i18n] {
   cursor: default;
 }
 
+html[data-i18n-edit="true"] .i18n-missing-translation {
+  outline-color: rgba(220, 38, 38, 0.65);
+  background: rgba(254, 226, 226, 0.45);
+}
+
 .form-divider {
   grid-column: 1 / -1;
   height: 1px;
@@ -1146,7 +1151,7 @@ textarea {
 }
 
 .contract-helper-card__reader-note {
-  margin-top: 12px;
+  margin-top: 18px;
   padding: 12px 14px;
   border-radius: 16px;
   border: 1px solid rgba(228, 143, 32, 0.25);
@@ -1156,9 +1161,19 @@ textarea {
   line-height: 1.5;
 }
 
+.contract-helper-card__copy .contract-helper-card__reader-note {
+  margin-top: 18px;
+}
+
 .contract-helper-card__reader-note a {
   color: var(--accent-dark);
   font-weight: 600;
+}
+
+.contract header .contract-helper-card__reader-note {
+  max-width: 760px;
+  margin-top: 14px;
+  color: var(--text);
 }
 
 .file-upload {

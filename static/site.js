@@ -1267,6 +1267,18 @@ const attachI18nEditAffordance = (el, key) => {
   el.dataset.i18nEditAttached = "true";
 };
 
+const markDynamicI18nEditTarget = (el, key, { missing = false } = {}) => {
+  if (!el || !key || !IS_STAGING_PAGE) return;
+  el.dataset.i18n = key;
+  if (missing) {
+    el.classList.add("i18n-missing-translation");
+    el.title = `Missing Tracker copy: ${key}`;
+  }
+  if (EDIT_I18N) {
+    attachI18nEditAffordance(el, key);
+  }
+};
+
 const populateContractAddonPriceElements = () => {
   const form = document.getElementById("contract-helper");
   if (!form) return;
@@ -1368,22 +1380,51 @@ const buildSeasonCards = () => {
   getAllSeasonCards().forEach((season) => {
     const card = document.createElement("article");
     card.className = "season-card";
-    if (season.id === "shared") {
+    const isSharedPolicyCard = season.id === "shared";
+    if (isSharedPolicyCard) {
       card.classList.add("season-card--full");
     }
     const heading = document.createElement("div");
-    const description = season.description
-      ? `<p>${getLocalizedText(season.description)}</p>`
-      : "";
-    const timeframe = season.timeframe
-      ? `<p><strong>${getLocalizedText(season.timeframe)}</strong></p>`
-      : "";
-    heading.innerHTML = `
-            <p class="eyebrow">${getLocalizedText(season.seasonLabel)}</p>
-            <h3>${getLocalizedText(season.name)}</h3>
-            ${description}
-            ${timeframe}
-        `;
+    const seasonLabel = document.createElement("p");
+    seasonLabel.className = "eyebrow";
+    seasonLabel.textContent = getLocalizedText(season.seasonLabel);
+    if (isSharedPolicyCard) {
+      const key = "sharedPolicies.seasonLabel";
+      markDynamicI18nEditTarget(seasonLabel, key, {
+        missing: !getTranslation(key),
+      });
+    }
+    heading.appendChild(seasonLabel);
+
+    const title = document.createElement("h3");
+    title.textContent = getLocalizedText(season.name);
+    if (isSharedPolicyCard) {
+      const key = "sharedPolicies.name";
+      markDynamicI18nEditTarget(title, key, {
+        missing: !getTranslation(key),
+      });
+    }
+    heading.appendChild(title);
+
+    if (season.description) {
+      const description = document.createElement("p");
+      description.textContent = getLocalizedText(season.description);
+      if (isSharedPolicyCard) {
+        const key = "sharedPolicies.description";
+        markDynamicI18nEditTarget(description, key, {
+          missing: !getTranslation(key),
+        });
+      }
+      heading.appendChild(description);
+    }
+
+    if (season.timeframe) {
+      const timeframe = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = getLocalizedText(season.timeframe);
+      timeframe.appendChild(strong);
+      heading.appendChild(timeframe);
+    }
 
     let table = null;
     if (season.offers && season.offers.length) {
