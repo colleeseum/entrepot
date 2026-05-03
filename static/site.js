@@ -3195,7 +3195,9 @@ const bootEntrepotSite = () => {
       body.style.lineHeight = "1.5";
       body.textContent =
         opts.message ||
-        "Sign in with Google to view staging website content from Tracker.";
+        (opts.mode === "email"
+          ? "Sign in to view staging website content from Tracker."
+          : "Sign in with Google to view staging website content from Tracker.");
 
       const error = document.createElement("p");
       error.style.margin = "0 0 14px";
@@ -3241,42 +3243,44 @@ const bootEntrepotSite = () => {
         controls.appendChild(passwordInput);
       }
 
-      const login = document.createElement("button");
-      login.type = "button";
-      login.textContent = opts.mode === "email" ? "Sign in" : "Sign in with Google";
-      login.style.padding = "10px 14px";
-      login.style.borderRadius = "10px";
-      login.style.border = "1px solid rgba(255,255,255,0.2)";
-      login.style.background = "#ffffff";
-      login.style.color = "#0b1020";
-      login.style.fontWeight = "700";
-      login.style.cursor = "pointer";
-      login.addEventListener("click", () => {
-        if (opts.mode === "email") {
-          opts.onEmailLogin?.({
-            email: emailInput?.value || "",
-            password: passwordInput?.value || "",
-          });
-          return;
-        }
-        opts.onLogin?.();
-      });
+      if (opts.actions !== false) {
+        const login = document.createElement("button");
+        login.type = "button";
+        login.textContent = opts.mode === "email" ? "Sign in" : "Sign in with Google";
+        login.style.padding = "10px 14px";
+        login.style.borderRadius = "10px";
+        login.style.border = "1px solid rgba(255,255,255,0.2)";
+        login.style.background = "#ffffff";
+        login.style.color = "#0b1020";
+        login.style.fontWeight = "700";
+        login.style.cursor = "pointer";
+        login.addEventListener("click", () => {
+          if (opts.mode === "email") {
+            opts.onEmailLogin?.({
+              email: emailInput?.value || "",
+              password: passwordInput?.value || "",
+            });
+            return;
+          }
+          opts.onLogin?.();
+        });
 
-      const logout = document.createElement("button");
-      logout.type = "button";
-      logout.textContent = "Sign out";
-      logout.style.padding = "10px 14px";
-      logout.style.borderRadius = "10px";
-      logout.style.border = "1px solid rgba(255,255,255,0.2)";
-      logout.style.background = "transparent";
-      logout.style.color = "#fff";
-      logout.style.fontWeight = "700";
-      logout.style.cursor = "pointer";
-      logout.style.display = opts.showLogout ? "inline-flex" : "none";
-      logout.addEventListener("click", () => opts.onLogout?.());
+        const logout = document.createElement("button");
+        logout.type = "button";
+        logout.textContent = "Sign out";
+        logout.style.padding = "10px 14px";
+        logout.style.borderRadius = "10px";
+        logout.style.border = "1px solid rgba(255,255,255,0.2)";
+        logout.style.background = "transparent";
+        logout.style.color = "#fff";
+        logout.style.fontWeight = "700";
+        logout.style.cursor = "pointer";
+        logout.style.display = opts.showLogout ? "inline-flex" : "none";
+        logout.addEventListener("click", () => opts.onLogout?.());
 
-      actions.appendChild(login);
-      actions.appendChild(logout);
+        actions.appendChild(login);
+        actions.appendChild(logout);
+      }
 
       card.appendChild(title);
       card.appendChild(body);
@@ -3284,7 +3288,9 @@ const bootEntrepotSite = () => {
       if (controls.childNodes.length) {
         card.appendChild(controls);
       }
-      card.appendChild(actions);
+      if (actions.childNodes.length) {
+        card.appendChild(actions);
+      }
       overlay.appendChild(card);
       document.body.appendChild(overlay);
     };
@@ -3387,15 +3393,7 @@ const bootEntrepotSite = () => {
 
       showStagingGate({
         message: `Signed in as ${user.email}. Loading staging content...`,
-        showLogout: true,
-        onLogout: async () => {
-          await signOut(firebaseAuth);
-          window.location.reload();
-        },
-        onLogin: async () => {
-          await signInWithPopup(firebaseAuth, provider);
-          window.location.reload();
-        },
+        actions: false,
       });
 
       // Local dev: avoid callable cross-origin CORS issues by reading the emulator directly.
