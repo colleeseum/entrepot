@@ -21,7 +21,7 @@ jobs:
     environment:
       name: github-pages
     env:
-      CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
+      CALLBACK_URL: https://us-central1-tracker-187c5.cloudfunctions.net/reportSitePublishJobUpdate
       CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
     steps:
       - name: Report job started
