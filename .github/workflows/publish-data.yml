@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
-          curl -sS -X POST "${CALLBACK_URL}" \
+          curl -fsS -X POST "${CALLBACK_URL}" \
             -H "Content-Type: application/json" \
             -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
             -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"workflow_started\",\"details\":{\"requestedBy\":\"${REQUESTED_BY}\"}}"
@@ -86,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
-          curl -sS -X POST "${CALLBACK_URL}" \
+          curl -fsS -X POST "${CALLBACK_URL}" \
             -H "Content-Type: application/json" \
             -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
             -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"export_done\",\"details\":null}"
@@ -101,7 +101,7 @@ jobs:
           if git diff --quiet -- ./static/generated/website-text.generated.js; then
             echo "No changes to commit."
             if [ -n "${PUBLISH_ID}" ] && [ -n "${CALLBACK_URL}" ]; then
-              curl -sS -X POST "${CALLBACK_URL}" \
+              curl -fsS -X POST "${CALLBACK_URL}" \
                 -H "Content-Type: application/json" \
                 -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
                 -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"no_changes\",\"details\":null}"
@@ -120,7 +120,7 @@ jobs:
           git push
 
           if [ -n "${PUBLISH_ID}" ] && [ -n "${CALLBACK_URL}" ]; then
-            curl -sS -X POST "${CALLBACK_URL}" \
+            curl -fsS -X POST "${CALLBACK_URL}" \
               -H "Content-Type: application/json" \
               -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
               -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"commit_pushed\",\"details\":{\"commitSha\":\"${COMMIT_SHA}\"}}"
@@ -134,7 +134,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${PUBLISH_ID}" ]; then exit 0; fi
-          curl -sS -X POST "${CALLBACK_URL}" \
+          curl -fsS -X POST "${CALLBACK_URL}" \
             -H "Content-Type: application/json" \
             -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
             -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"deploy_started\",\"details\":null}"
@@ -166,7 +166,7 @@ jobs:
           else
             STATUS="deploy_failed"
           fi
-          curl -sS -X POST "${CALLBACK_URL}" \
+          curl -fsS -X POST "${CALLBACK_URL}" \
             -H "Content-Type: application/json" \
             -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
             -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"${STATUS}\",\"details\":{\"jobStatus\":\"${JOB_STATUS}\",\"pageUrl\":\"${PAGE_URL}\"}}"
