@@ -50,7 +50,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: tracker/functions/package-lock.json
 
@@ -59,12 +59,17 @@ jobs:
         working-directory: tracker/functions
 
       - name: Write Firebase service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           set -euo pipefail
+          if [ -z "${FIREBASE_SERVICE_ACCOUNT}" ]; then
+            echo "FIREBASE_SERVICE_ACCOUNT GitHub secret is empty or missing." >&2
+            exit 1
+          fi
           mkdir -p .secrets
-          cat > .secrets/firebase-service-account.json <<'EOF'
-          ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          EOF
+          printf '%s' "${FIREBASE_SERVICE_ACCOUNT}" > .secrets/firebase-service-account.json
+          node -e "JSON.parse(require('fs').readFileSync('.secrets/firebase-service-account.json', 'utf8'));"
         shell: bash
 
       - name: Export website text from Firestore
