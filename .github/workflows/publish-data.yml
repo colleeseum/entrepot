@@ -20,12 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+    env:
+      CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
+      CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
     steps:
       - name: Report job started
-        if: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        if: ${{ env.CALLBACK_URL != '' }}
         env:
-          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
-          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
           PUBLISH_ID: ${{ github.event.client_payload.publishId }}
           REQUESTED_BY: ${{ github.event.client_payload.requestedBy }}
         run: |
@@ -74,10 +75,8 @@ jobs:
         run: node tracker/functions/scripts/export-site-data.mjs --out ./static/generated/website-text.generated.js
 
       - name: Report export done
-        if: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        if: ${{ env.CALLBACK_URL != '' }}
         env:
-          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
-          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
           PUBLISH_ID: ${{ github.event.client_payload.publishId }}
         run: |
           set -euo pipefail
@@ -89,15 +88,17 @@ jobs:
         shell: bash
 
       - name: Commit and push if changed
+        env:
+          PUBLISH_ID: ${{ github.event.client_payload.publishId }}
+          REQUESTED_BY: ${{ github.event.client_payload.requestedBy }}
         run: |
           set -euo pipefail
           if git diff --quiet -- ./static/generated/website-text.generated.js; then
             echo "No changes to commit."
-            PUBLISH_ID="${{ github.event.client_payload.publishId }}"
-            if [ -n "${PUBLISH_ID}" ] && [ -n "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" ]; then
-              curl -sS -X POST "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" \
+            if [ -n "${PUBLISH_ID}" ] && [ -n "${CALLBACK_URL}" ]; then
+              curl -sS -X POST "${CALLBACK_URL}" \
                 -H "Content-Type: application/json" \
-                -H "x-tracker-callback-token: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}" \
+                -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
                 -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"no_changes\",\"details\":null}"
             fi
             exit 0
@@ -105,8 +106,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ./static/generated/website-text.generated.js
-          PUBLISH_ID="${{ github.event.client_payload.publishId }}"
-          REQUESTED_BY="${{ github.event.client_payload.requestedBy }}"
           if [ -z "${PUBLISH_ID}" ]; then
             git commit -m "[data-publish] Update website text"
           else
@@ -115,19 +114,17 @@ jobs:
           COMMIT_SHA="$(git rev-parse HEAD)"
           git push
 
-          if [ -n "${PUBLISH_ID}" ] && [ -n "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" ]; then
-            curl -sS -X POST "${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}" \
+          if [ -n "${PUBLISH_ID}" ] && [ -n "${CALLBACK_URL}" ]; then
+            curl -sS -X POST "${CALLBACK_URL}" \
               -H "Content-Type: application/json" \
-              -H "x-tracker-callback-token: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}" \
+              -H "x-tracker-callback-token: ${CALLBACK_TOKEN}" \
               -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"commit_pushed\",\"details\":{\"commitSha\":\"${COMMIT_SHA}\"}}"
           fi
         shell: bash
 
       - name: Report deploy started
-        if: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        if: ${{ env.CALLBACK_URL != '' }}
         env:
-          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
-          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
           PUBLISH_ID: ${{ github.event.client_payload.publishId }}
         run: |
           set -euo pipefail
@@ -151,10 +148,8 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Report workflow done
-        if: ${{ always() && secrets.TRACKER_PUBLISH_CALLBACK_URL != '' }}
+        if: ${{ always() && env.CALLBACK_URL != '' }}
         env:
-          CALLBACK_URL: ${{ secrets.TRACKER_PUBLISH_CALLBACK_URL }}
-          CALLBACK_TOKEN: ${{ secrets.TRACKER_PUBLISH_CALLBACK_TOKEN }}
           PUBLISH_ID: ${{ github.event.client_payload.publishId }}
           JOB_STATUS: ${{ job.status }}
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
