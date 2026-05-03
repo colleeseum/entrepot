@@ -6,7 +6,25 @@ import {
   httpsCallable,
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-functions.js";
 import {
-  SERVICE_PRICES as GENERATED_SERVICE_PRICES,
+  getAuth,
+  connectAuthEmulator,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import {
+  STORAGE_ADDONS as GENERATED_STORAGE_ADDONS,
+  STORAGE_SEASON_ADDONS as GENERATED_STORAGE_SEASON_ADDONS,
   STORAGE_CONDITIONS as GENERATED_STORAGE_CONDITIONS,
   STORAGE_ETIQUETTE as GENERATED_STORAGE_ETIQUETTE,
   STORAGE_SEASONS as GENERATED_STORAGE_SEASONS,
@@ -29,6 +47,68 @@ const IS_LOCALHOST =
   (window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1");
 const DISABLE_MAILTO_FALLBACK = IS_LOCALHOST;
+const IS_STAGING_PAGE =
+  typeof window !== "undefined" &&
+  (() => {
+    try {
+      const path = window.location.pathname || "";
+      if (path === "/staging" || path.startsWith("/staging/")) return true;
+      const params = new URLSearchParams(window.location.search || "");
+      const value = (params.get("staging") || "").trim().toLowerCase();
+      return value === "1" || value === "true";
+    } catch (err) {
+      return false;
+    }
+  })();
+
+const DEBUG_I18N_KEYS =
+  typeof window !== "undefined" &&
+  (() => {
+    if (!IS_STAGING_PAGE) return false;
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      if (!params.has("debug")) return false;
+      const value = (params.get("debug") || "").trim().toLowerCase();
+      // Enable on ?debug, ?debug=1, ?debug=true, ?debug=i18n
+      if (!value) return true;
+      return value === "1" || value === "true" || value === "i18n";
+    } catch (err) {
+      return false;
+    }
+  })();
+
+const EDIT_I18N =
+  typeof window !== "undefined" &&
+  (() => {
+    if (!IS_STAGING_PAGE) return false;
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      if (!params.has("edit")) return false;
+      const value = (params.get("edit") || "").trim().toLowerCase();
+      if (!value) return true;
+      return value === "1" || value === "true" || value === "i18n";
+    } catch (err) {
+      return false;
+    }
+  })();
+
+const STAGING_ALLOWED_EMAILS = new Set(["sergecolle@gmail.com", "arcolle@gmail.com"]);
+
+if (typeof document !== "undefined" && EDIT_I18N) {
+  document.documentElement.dataset.i18nEdit = "true";
+}
+
+if (typeof window !== "undefined") {
+  window.__ENTREPOT_STAGING_FLAGS__ = {
+    isStaging: IS_STAGING_PAGE,
+    edit: EDIT_I18N,
+    debug: DEBUG_I18N_KEYS,
+    path: window.location?.pathname || "",
+    search: window.location?.search || "",
+    loadedAt: Date.now(),
+    build: "staging-edit-v1",
+  };
+}
 
 const firebaseConfig = {
   apiKey: "AIzaSyAEtdh7DvpbC4T4HaQ646alWA1T9iSfz3o",
@@ -43,9 +123,12 @@ const firebaseConfig = {
 let firebaseApp = null;
 let firebaseAnalytics = null;
 let firebaseFunctions = null;
+let firebaseAuth = null;
+let firebaseDb = null;
 let sendEmailCallable = null;
 let createStorageRequestCallable = null;
 let createStorageRequestsCallable = null;
+let getWebsiteContentCallable = null;
 
 try {
   firebaseApp = initializeApp(firebaseConfig);
@@ -55,8 +138,22 @@ try {
     console.warn("Analytics unavailable", analyticsErr);
   }
   firebaseFunctions = getFunctions(firebaseApp);
+  firebaseAuth = getAuth(firebaseApp);
+  firebaseDb = getFirestore(firebaseApp);
   if (IS_LOCALHOST) {
     connectFunctionsEmulator(firebaseFunctions, "localhost", 5001);
+    try {
+      connectAuthEmulator(firebaseAuth, "http://localhost:9099", {
+        disableWarnings: true,
+      });
+    } catch (err) {
+      // ignore if already connected
+    }
+    try {
+      connectFirestoreEmulator(firebaseDb, "localhost", 8081);
+    } catch (err) {
+      // ignore if already connected
+    }
   }
   sendEmailCallable = httpsCallable(firebaseFunctions, "sendEmail");
   createStorageRequestCallable = httpsCallable(
@@ -67,6 +164,7 @@ try {
     firebaseFunctions,
     "createStorageRequests",
   );
+  getWebsiteContentCallable = httpsCallable(firebaseFunctions, "getWebsiteContent");
 } catch (firebaseErr) {
   console.warn("Firebase initialization failed", firebaseErr);
 }
@@ -105,36 +203,29 @@ const ensureGeneratedData = (value, label) => {
   return value;
 };
 
-const SERVICE_PRICES = ensureGeneratedData(
-  GENERATED_SERVICE_PRICES,
-  "SERVICE_PRICES",
-);
-const STORAGE_CONDITIONS = ensureGeneratedData(
+let STORAGE_ADDONS = Array.isArray(GENERATED_STORAGE_ADDONS)
+  ? GENERATED_STORAGE_ADDONS
+  : [];
+let STORAGE_SEASON_ADDONS = Array.isArray(GENERATED_STORAGE_SEASON_ADDONS)
+  ? GENERATED_STORAGE_SEASON_ADDONS
+  : [];
+let STORAGE_CONDITIONS = ensureGeneratedData(
   GENERATED_STORAGE_CONDITIONS,
   "STORAGE_CONDITIONS",
 );
-const STORAGE_ETIQUETTE = ensureGeneratedData(
+let STORAGE_ETIQUETTE = ensureGeneratedData(
   GENERATED_STORAGE_ETIQUETTE,
   "STORAGE_ETIQUETTE",
 );
-const SEASON_DEFINITIONS = ensureGeneratedData(
+let SEASON_DEFINITIONS = ensureGeneratedData(
   GENERATED_STORAGE_SEASONS,
   "STORAGE_SEASONS",
 );
-const VEHICLE_TYPES = ensureGeneratedData(
+let VEHICLE_TYPES = ensureGeneratedData(
   GENERATED_VEHICLE_TYPES,
   "VEHICLE_TYPES",
-)
-  .slice()
-  .sort((a, b) => {
-    const aOrder =
-      typeof a.order === "number" ? a.order : Number.MAX_SAFE_INTEGER;
-    const bOrder =
-      typeof b.order === "number" ? b.order : Number.MAX_SAFE_INTEGER;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    return (a.value || "").localeCompare(b.value || "");
-  });
-const I18N = ensureGeneratedData(GENERATED_I18N, "I18N");
+);
+let I18N = ensureGeneratedData(GENERATED_I18N, "I18N");
 
 const slugifyVehicleType = (value = "") =>
   value
@@ -146,34 +237,76 @@ const slugifyVehicleType = (value = "") =>
     .replace(/^-+|-+$/g, "")
     .replace(/--+/g, "-");
 
-const VEHICLE_TYPE_LOOKUP = new Map();
-const VEHICLE_TYPE_SLUG_LOOKUP = new Map();
-const VEHICLE_TYPE_LEGACY_LOOKUP = new Map();
+let VEHICLE_TYPE_LOOKUP = new Map();
+let VEHICLE_TYPE_SLUG_LOOKUP = new Map();
+let VEHICLE_TYPE_LEGACY_LOOKUP = new Map();
 
-VEHICLE_TYPES.forEach((type) => {
-  const key = type.id || type.value;
-  if (key) {
-    VEHICLE_TYPE_LOOKUP.set(key, type);
-  }
-  const slug = type.slug || slugifyVehicleType(type.value || "");
-  if (slug) {
-    VEHICLE_TYPE_SLUG_LOOKUP.set(slug, type);
-  }
-  const legacyValues = Array.isArray(type.legacyValues)
-    ? type.legacyValues
-    : [];
-  legacyValues.forEach((legacy) => {
-    if (!legacy) return;
-    VEHICLE_TYPE_LEGACY_LOOKUP.set(legacy, type);
-    const legacySlug = slugifyVehicleType(legacy);
-    if (legacySlug && !VEHICLE_TYPE_SLUG_LOOKUP.has(legacySlug)) {
-      VEHICLE_TYPE_SLUG_LOOKUP.set(legacySlug, type);
+let SEASON_LOOKUP = {};
+
+const rebuildGeneratedLookups = () => {
+  // Vehicle types
+  const sortedVehicleTypes = ensureGeneratedData(VEHICLE_TYPES, "VEHICLE_TYPES")
+    .slice()
+    .sort((a, b) => {
+      const aOrder =
+        typeof a.order === "number" ? a.order : Number.MAX_SAFE_INTEGER;
+      const bOrder =
+        typeof b.order === "number" ? b.order : Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return (a.value || "").localeCompare(b.value || "");
+    });
+  VEHICLE_TYPES = sortedVehicleTypes;
+
+  VEHICLE_TYPE_LOOKUP = new Map();
+  VEHICLE_TYPE_SLUG_LOOKUP = new Map();
+  VEHICLE_TYPE_LEGACY_LOOKUP = new Map();
+
+  VEHICLE_TYPES.forEach((type) => {
+    const key = type.id || type.value;
+    if (key) {
+      VEHICLE_TYPE_LOOKUP.set(key, type);
+    }
+    const slug = type.slug || slugifyVehicleType(type.value || "");
+    if (slug) {
+      VEHICLE_TYPE_SLUG_LOOKUP.set(slug, type);
+    }
+    const legacyValues = Array.isArray(type.legacyValues)
+      ? type.legacyValues
+      : [];
+    legacyValues.forEach((legacy) => {
+      if (!legacy) return;
+      VEHICLE_TYPE_LEGACY_LOOKUP.set(legacy, type);
+      const legacySlug = slugifyVehicleType(legacy);
+      if (legacySlug && !VEHICLE_TYPE_SLUG_LOOKUP.has(legacySlug)) {
+        VEHICLE_TYPE_SLUG_LOOKUP.set(legacySlug, type);
+      }
+    });
+    if (type.value) {
+      VEHICLE_TYPE_LEGACY_LOOKUP.set(type.value, type);
     }
   });
-  if (type.value) {
-    VEHICLE_TYPE_LEGACY_LOOKUP.set(type.value, type);
-  }
-});
+
+  // Seasons
+  SEASON_DEFINITIONS = ensureGeneratedData(SEASON_DEFINITIONS, "STORAGE_SEASONS");
+  SEASON_LOOKUP = SEASON_DEFINITIONS.reduce((acc, season) => {
+    acc[season.id] = season;
+    return acc;
+  }, {});
+  // Keep the shared policy card in sync with latest conditions.
+  SHARED_POLICY_CARD.policies = STORAGE_CONDITIONS;
+};
+
+const setWebsiteContentPayload = (payload) => {
+  if (!payload || typeof payload !== "object") return;
+  if (payload.STORAGE_ADDONS) STORAGE_ADDONS = payload.STORAGE_ADDONS;
+  if (payload.STORAGE_SEASON_ADDONS) STORAGE_SEASON_ADDONS = payload.STORAGE_SEASON_ADDONS;
+  if (payload.STORAGE_CONDITIONS) STORAGE_CONDITIONS = payload.STORAGE_CONDITIONS;
+  if (payload.STORAGE_ETIQUETTE) STORAGE_ETIQUETTE = payload.STORAGE_ETIQUETTE;
+  if (payload.STORAGE_SEASONS) SEASON_DEFINITIONS = payload.STORAGE_SEASONS;
+  if (payload.VEHICLE_TYPES) VEHICLE_TYPES = payload.VEHICLE_TYPES;
+  if (payload.I18N) I18N = payload.I18N;
+  rebuildGeneratedLookups();
+};
 
 const getVehicleTypeEntry = (value) => {
   if (!value) return null;
@@ -193,20 +326,7 @@ const isOtherVehicleType = (value) => getVehicleTypeSlug(value) === "other";
 const requiresLengthForType = (value) =>
   LENGTH_REQUIRED_TYPE_SLUGS.has(getVehicleTypeSlug(value));
 
-const REQUIRED_SERVICE_PRICE_CODES = ["battery", "propane"];
-
-const ensureServicePriceData = () => {
-  REQUIRED_SERVICE_PRICE_CODES.forEach((code) => {
-    const amount = SERVICE_PRICES[code];
-    if (typeof amount !== "number" || Number.isNaN(amount)) {
-      throw new Error(
-        `Missing service price for "${code}". Update storageAddOns in Tracker and re-run the export script.`,
-      );
-    }
-  });
-};
-
-ensureServicePriceData();
+// Add-on prices are season-scoped (Tracker -> storageSeasonAddOns). Do not enforce a global price map.
 
 const getRecaptchaSiteKey = () => {
   if (typeof document === "undefined") return "";
@@ -648,7 +768,8 @@ const getMessage = (key, lang = currentLanguage) => getTranslation(key, lang);
 
 const formatTemplate = (template, replacements = {}) => {
   if (!template) return "";
-  return template.replace(/{{(\w+)}}/g, (_, token) => {
+  return template.replace(/{{(\w+)}}|{(\w+)}/g, (_, doubleToken, singleToken) => {
+    const token = doubleToken || singleToken;
     const value = replacements[token];
     return value === undefined ? "" : String(value);
   });
@@ -678,13 +799,7 @@ const getLocalizedText = (value, lang = currentLanguage) => {
   return value || "";
 };
 
-const getPricingReplacements = (lang = currentLanguage) => {
-  const replacements = {};
-  Object.entries(SERVICE_PRICES || {}).forEach(([code, amount]) => {
-    replacements[`${code}Price`] = formatCurrency(amount, lang);
-  });
-  return replacements;
-};
+const getPricingReplacements = () => ({});
 
 const resolvePolicyEntry = (policy, lang = currentLanguage) => {
   if (!policy) return { text: "", tooltip: undefined };
@@ -749,10 +864,8 @@ const SHARED_POLICY_CARD = {
   policies: STORAGE_CONDITIONS,
 };
 
-const SEASON_LOOKUP = SEASON_DEFINITIONS.reduce((acc, season) => {
-  acc[season.id] = season;
-  return acc;
-}, {});
+// Initialize lookups from the generated content (static file).
+rebuildGeneratedLookups();
 
 const normalizeSeasonDateString = (value = "") => {
   const trimmed = String(value || "").trim();
@@ -875,6 +988,15 @@ const getOffersForType = (season, vehicleType) => {
   );
 };
 
+const getSeasonAddonPrice = (seasonId = "", code = "") => {
+  if (!seasonId || !code) return null;
+  const entry = STORAGE_SEASON_ADDONS.find(
+    (row) => row && row.seasonId === seasonId && row.code === code,
+  );
+  if (!entry) return null;
+  return typeof entry.price === "number" ? entry.price : Number(entry.price) || 0;
+};
+
 const computeOfferPrice = (offer, context) => {
   if (!offer || !offer.price) return null;
   if (offer.price.mode === "contact") return null;
@@ -915,12 +1037,197 @@ const estimateRentalCost = (values) => {
   }
   let total = baseAmount;
   if (values.battery === "yes") {
-    total += SERVICE_PRICES.battery;
+    total += getSeasonAddonPrice(values.season, "battery") || 0;
   }
   if (values.propane === "yes") {
-    total += SERVICE_PRICES.propane;
+    total += getSeasonAddonPrice(values.season, "propane") || 0;
   }
   return formatCurrency(total);
+};
+
+// "Add-on services" marketing copy is i18n HTML and may contain placeholders like:
+//   <span data-service-price="battery"></span>
+// Pricing is season-scoped, so we intentionally strip these placeholders from the
+// marketing section to avoid showing the wrong price (or any price at all).
+const populateServicePriceElements = (root) => {
+  if (!root || !root.querySelectorAll) return;
+  root.querySelectorAll("[data-service-price]").forEach((el) => {
+    const parent = el.parentElement;
+    el.remove();
+    if (parent && parent.tagName === "STRONG" && !parent.textContent.trim()) {
+      parent.remove();
+    }
+  });
+};
+
+const showI18nToast = (message) => {
+  if (typeof document === "undefined") return;
+  const existing = document.getElementById("i18n-edit-toast");
+  if (existing) existing.remove();
+  const toast = document.createElement("div");
+  toast.id = "i18n-edit-toast";
+  toast.className = "i18n-edit-toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  window.setTimeout(() => {
+    toast.classList.add("visible");
+  }, 10);
+  window.setTimeout(() => {
+    toast.classList.remove("visible");
+    window.setTimeout(() => toast.remove(), 250);
+  }, 1400);
+};
+
+const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    return false;
+  }
+};
+
+const renderStagingModeToggle = () => {
+  if (typeof document === "undefined" || !IS_STAGING_PAGE) return;
+  const existing = document.getElementById("staging-mode-toggle");
+  if (existing) existing.remove();
+
+  const button = document.createElement("button");
+  button.id = "staging-mode-toggle";
+  button.type = "button";
+  button.className = "staging-mode-toggle";
+  button.textContent = EDIT_I18N ? "View" : "Edit";
+  button.setAttribute(
+    "aria-label",
+    EDIT_I18N ? "Switch staging preview to view mode" : "Switch staging preview to edit mode",
+  );
+  button.addEventListener("click", () => {
+    const url = new URL(window.location.href);
+    if (EDIT_I18N) {
+      url.searchParams.delete("edit");
+    } else {
+      url.searchParams.set("edit", "1");
+    }
+    window.location.assign(url.toString());
+  });
+  document.body.appendChild(button);
+};
+
+const createPencilIcon = () => {
+  // Some browsers and extensions can interfere with inline SVG rendering inside buttons.
+  // Use plain text as the durable fallback, and let CSS render an icon if possible.
+  const span = document.createElement("span");
+  span.className = "i18n-edit-icon-fallback";
+  span.textContent = "Edit";
+  return span;
+};
+
+const getTrackerAdminBaseUrl = () => {
+  if (typeof window === "undefined") return "";
+  const host = window.location.hostname || "";
+  const isLocal =
+    host === "localhost" || host === "127.0.0.1" || host === "::1";
+  if (isLocal) {
+    return "http://127.0.0.1:5002";
+  }
+  return "https://tracker-187c5.web.app";
+};
+
+const buildTrackerI18nEditUrl = (key) => {
+  const base = getTrackerAdminBaseUrl();
+  if (!base) return "";
+  const url = new URL(base);
+  url.searchParams.set("view", "pricing");
+  url.searchParams.set("panel", "i18n");
+  url.searchParams.set("editI18nKey", key);
+  return url.toString();
+};
+
+const openTrackerAdminTab = (url) => {
+  if (typeof window === "undefined") return null;
+  if (!url) return null;
+  // Use a named browsing context. Do not keep or mutate a Window reference:
+  // Tracker runs on another origin, so direct navigation/focus access can raise
+  // cross-origin errors in local staging.
+  return window.open(url, "tracker_admin");
+};
+
+const attachI18nEditAffordance = (el, key) => {
+  if (!el || !key) return;
+  // For attribute translations, we do not attach buttons (not visible content).
+  if (el.dataset.i18nAttr) return;
+
+  // Make the translated block open Tracker only with a modifier key so we do not
+  // break normal interactions (form steppers, buttons, links).
+  if (!el.dataset.i18nEditClickAttached) {
+    el.addEventListener("click", (evt) => {
+      if (!EDIT_I18N) return;
+      // Only when holding Alt/Option.
+      if (!evt.altKey) return;
+      // Ignore interactive elements.
+      const target = evt.target;
+      if (target && target.closest && target.closest("a,button,input,select,textarea,label")) {
+        return;
+      }
+      evt.preventDefault();
+      evt.stopPropagation();
+      const url = buildTrackerI18nEditUrl(key);
+      const opened = openTrackerAdminTab(url);
+      if (!opened) {
+        showI18nToast(`Open Tracker and search: ${key}`);
+      }
+    });
+    el.dataset.i18nEditClickAttached = "true";
+  }
+
+  // Re-attach if translations re-render and wipe the button.
+  if (el.querySelector(":scope > .i18n-edit-button")) {
+    el.dataset.i18nEditAttached = "true";
+    return;
+  }
+
+  // Keep the UI minimal and not disruptive: a small button appended inline.
+  if (getComputedStyle(el).position === "static") {
+    el.style.position = "relative";
+  }
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "i18n-edit-button";
+  btn.setAttribute("aria-label", `Edit in Tracker: ${key}`);
+  btn.title = `Edit in Tracker: ${key}`;
+  btn.appendChild(createPencilIcon());
+  btn.addEventListener("click", async (evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    const url = buildTrackerI18nEditUrl(key);
+    const opened = openTrackerAdminTab(url);
+    if (!opened) {
+      // Popup blockers or missing base URL.
+      showI18nToast(`Open Tracker and search: ${key}`);
+    }
+  });
+
+  el.appendChild(btn);
+  el.dataset.i18nEditAttached = "true";
+};
+
+const populateContractAddonPriceElements = () => {
+  const form = document.getElementById("contract-helper");
+  if (!form) return;
+  const seasonSelect = form.querySelector('select[name="season"]');
+  const seasonId = seasonSelect?.value?.trim() || "";
+
+  document.querySelectorAll("[data-addon-price]").forEach((el) => {
+    const code = el.dataset.addonPrice || "";
+    const price = getSeasonAddonPrice(seasonId, code);
+    if (!seasonId || price === null) {
+      el.textContent = "";
+      el.classList.add("hidden");
+      return;
+    }
+    el.classList.remove("hidden");
+    el.textContent = formatCurrency(price);
+  });
 };
 
 const buildTenantPayload = (data) => {
@@ -983,7 +1290,7 @@ const formatOfferNote = (offer, lang = currentLanguage) => {
   const template = getLocalizedText(offer.note, lang);
   if (!template) return "";
   const replacements = {};
-  if (template.includes("{{amount}}")) {
+  if (template.includes("{{amount}}") || template.includes("{amount}")) {
     const minimum = offer.price?.minimum;
     replacements.amount = minimum ? formatCurrency(minimum, lang) : "";
   }
@@ -1031,9 +1338,16 @@ const buildSeasonCards = () => {
           const row = document.createElement("tr");
           const label = document.createElement("td");
           const note = formatOfferNote(offer);
-          label.textContent = note
-            ? `${getLocalizedText(offer.label)} (${note})`
-            : getLocalizedText(offer.label);
+          if (note) {
+            const trimmed = String(note).trim();
+            const alreadyWrapped =
+              trimmed.length >= 2 && trimmed.startsWith("(") && trimmed.endsWith(")");
+            label.textContent = alreadyWrapped
+              ? `${getLocalizedText(offer.label)} ${trimmed}`
+              : `${getLocalizedText(offer.label)} (${trimmed})`;
+          } else {
+            label.textContent = getLocalizedText(offer.label);
+          }
           const price = document.createElement("td");
           price.textContent = formatOfferPriceDisplay(offer);
           row.appendChild(label);
@@ -1392,8 +1706,10 @@ const initFormStepper = () => {
       updateLeaseDuration();
       updateEstimatedCost();
       updateInsuranceExpirationWarning();
+      populateContractAddonPriceElements();
     });
     updateInsuranceExpirationWarning();
+    populateContractAddonPriceElements();
   }
 
   if (insuranceExpirationInput) {
@@ -1617,28 +1933,7 @@ const initFormStepper = () => {
   };
 };
 
-const populateServicePriceElements = (root = document) => {
-  const scope = root?.querySelectorAll
-    ? root
-    : document;
-  const servicePriceEls = scope.querySelectorAll
-    ? scope.querySelectorAll("[data-service-price]")
-    : [];
-  servicePriceEls.forEach((el) => {
-    const key = el.dataset.servicePrice;
-    const amount = SERVICE_PRICES[key];
-    if (typeof amount !== "number") {
-      throw new Error(
-        `Unable to display service price: missing "${key}" code in generated data.`,
-      );
-    }
-    el.textContent = formatCurrency(amount);
-  });
-};
-
-const populateServicePrices = () => {
-  populateServicePriceElements(document);
-};
+const populateServicePrices = () => {};
 
 const updateContractDownloadLink = () => {
   if (!contractDownloadLink) return;
@@ -2564,8 +2859,8 @@ const generateContractPdf = async (data) => {
   const estimatedCostDisplay = estimateRentalCost(data);
   const depositValue = parseCurrencyValue(data.deposit) || 0;
   const estimatedAmount = parseCurrencyValue(estimatedCostDisplay) || 0;
-  const batteryFee = data.battery === "yes" ? SERVICE_PRICES.battery : 0;
-  const propaneFee = data.propane === "yes" ? SERVICE_PRICES.propane : 0;
+  const batteryFee = data.battery === "yes" ? getSeasonAddonPrice(data.season, "battery") || 0 : 0;
+  const propaneFee = data.propane === "yes" ? getSeasonAddonPrice(data.season, "propane") || 0 : 0;
   const servicesTotal = batteryFee + propaneFee;
   const remainingAmount = Math.max(estimatedAmount - depositValue, 0);
   const servicesDisplay =
@@ -2689,10 +2984,28 @@ const seasonWindow = (seasonValue = "") => {
 
 const applyTranslationsForLanguage = (lang) => {
   const elements = document.querySelectorAll("[data-i18n]");
+  let editAttachCount = 0;
+  let translatedCount = 0;
   elements.forEach((el) => {
     const key = el.dataset.i18n;
+    if (DEBUG_I18N_KEYS) {
+      const attrTargets = el.dataset.i18nAttr
+        ? el.dataset.i18nAttr
+            .split(",")
+            .map((attr) => attr.trim())
+            .filter(Boolean)
+        : [];
+      if (attrTargets.length) {
+        attrTargets.forEach((attr) => el.setAttribute(attr, key));
+        return;
+      }
+      // Force plain text so we don't accidentally render markup when debugging.
+      el.textContent = key;
+      return;
+    }
     const translation = getTranslation(key, lang);
     if (!translation) return;
+    translatedCount += 1;
     const attrTargets = el.dataset.i18nAttr
       ? el.dataset.i18nAttr
           .split(",")
@@ -2706,10 +3019,33 @@ const applyTranslationsForLanguage = (lang) => {
     if (el.dataset.i18nHtml === "true") {
       el.innerHTML = translation;
       populateServicePriceElements(el);
+      if (EDIT_I18N) {
+        attachI18nEditAffordance(el, key);
+        editAttachCount += 1;
+      }
       return;
     }
     el.textContent = translation;
+    if (EDIT_I18N) {
+      attachI18nEditAffordance(el, key);
+      editAttachCount += 1;
+    }
   });
+  if (typeof window !== "undefined" && IS_STAGING_PAGE && EDIT_I18N) {
+    // Visible in DevTools to confirm edit mode is running.
+    window.__ENTREPOT_STAGING_FLAGS__ = {
+      ...(window.__ENTREPOT_STAGING_FLAGS__ || {}),
+      lastEditAttachCount: editAttachCount,
+      lastTranslatedCount: translatedCount,
+    };
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.i18nEditCount = String(editAttachCount);
+    }
+    if (!window.__ENTREPOT_EDIT_LOGGED__) {
+      window.__ENTREPOT_EDIT_LOGGED__ = true;
+      console.info("[entrepot] edit mode active; i18n nodes processed:", editAttachCount);
+    }
+  }
 };
 
 const updateLanguageToggleState = () => {
@@ -2733,6 +3069,10 @@ const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
     } catch (err) {}
   }
   applyTranslationsForLanguage(currentLanguage);
+  if (typeof window !== "undefined" && IS_STAGING_PAGE && EDIT_I18N) {
+    if (!window.__ENTREPOT_STAGING_FLAGS__) window.__ENTREPOT_STAGING_FLAGS__ = {};
+    window.__ENTREPOT_STAGING_FLAGS__.lastApplyLanguageAt = Date.now();
+  }
   buildSeasonCards();
   populateServicePrices();
   updateContractDownloadLink();
@@ -2799,26 +3139,379 @@ const getLanguageFromUrl = () => {
   return null;
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  const urlLanguageRaw = getLanguageFromUrl();
-  const storedLanguage = getStoredLanguage();
-  const urlLanguage = storedLanguage ? null : urlLanguageRaw;
-  const hostLanguage = getLanguageFromHostname();
-  const initialLanguage =
-    storedLanguage || urlLanguage || hostLanguage || DEFAULT_LANGUAGE;
+const bootEntrepotSite = () => {
+  (async () => {
+    if (typeof window !== "undefined" && window.__ENTREPOT_STAGING_FLAGS__) {
+      window.__ENTREPOT_STAGING_FLAGS__.bootStartedAt = Date.now();
+    }
+    renderStagingModeToggle();
+    const urlLanguageRaw = getLanguageFromUrl();
+    const storedLanguage = getStoredLanguage();
+    const urlLanguage = storedLanguage ? null : urlLanguageRaw;
+    const hostLanguage = getLanguageFromHostname();
+    const initialLanguage =
+      storedLanguage || urlLanguage || hostLanguage || DEFAULT_LANGUAGE;
 
-  currentLanguage = initialLanguage;
-  if (typeof document !== "undefined") {
-    document.documentElement.lang = currentLanguage;
+    currentLanguage = initialLanguage;
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = currentLanguage;
+    }
+
+    const showStagingGate = (opts = {}) => {
+      const existing = document.getElementById("staging-gate");
+      if (existing) existing.remove();
+      const page = document.querySelector(".page");
+      if (page) {
+        page.dataset.stagingHidden = "true";
+        page.style.visibility = "hidden";
+      }
+
+      const overlay = document.createElement("div");
+      overlay.id = "staging-gate";
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.background = "#0b1020";
+      overlay.style.color = "#fff";
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      overlay.style.padding = "24px";
+      overlay.style.zIndex = "9999";
+
+      const card = document.createElement("div");
+      card.style.maxWidth = "520px";
+      card.style.width = "100%";
+      card.style.background = "rgba(255,255,255,0.06)";
+      card.style.border = "1px solid rgba(255,255,255,0.14)";
+      card.style.borderRadius = "12px";
+      card.style.padding = "18px";
+
+      const title = document.createElement("h2");
+      title.textContent = "Staging preview";
+      title.style.margin = "0 0 10px";
+
+      const body = document.createElement("p");
+      body.style.margin = "0 0 14px";
+      body.style.lineHeight = "1.5";
+      body.textContent =
+        opts.message ||
+        "Sign in with Google to view staging website content from Tracker.";
+
+      const error = document.createElement("p");
+      error.style.margin = "0 0 14px";
+      error.style.color = "#ffb4b4";
+      error.style.display = opts.error ? "block" : "none";
+      error.textContent = opts.error || "";
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "10px";
+      actions.style.flexWrap = "wrap";
+
+      const controls = document.createElement("div");
+      controls.style.display = "grid";
+      controls.style.gridTemplateColumns = "1fr";
+      controls.style.gap = "10px";
+      controls.style.marginBottom = "12px";
+
+      let emailInput = null;
+      let passwordInput = null;
+      if (opts.mode === "email") {
+        emailInput = document.createElement("input");
+        emailInput.type = "email";
+        emailInput.placeholder = "Email";
+        emailInput.autocomplete = "username";
+        emailInput.style.padding = "10px 12px";
+        emailInput.style.borderRadius = "10px";
+        emailInput.style.border = "1px solid rgba(255,255,255,0.22)";
+        emailInput.style.background = "rgba(255,255,255,0.08)";
+        emailInput.style.color = "#fff";
+
+        passwordInput = document.createElement("input");
+        passwordInput.type = "password";
+        passwordInput.placeholder = "Password";
+        passwordInput.autocomplete = "current-password";
+        passwordInput.style.padding = "10px 12px";
+        passwordInput.style.borderRadius = "10px";
+        passwordInput.style.border = "1px solid rgba(255,255,255,0.22)";
+        passwordInput.style.background = "rgba(255,255,255,0.08)";
+        passwordInput.style.color = "#fff";
+
+        controls.appendChild(emailInput);
+        controls.appendChild(passwordInput);
+      }
+
+      const login = document.createElement("button");
+      login.type = "button";
+      login.textContent = opts.mode === "email" ? "Sign in" : "Sign in with Google";
+      login.style.padding = "10px 14px";
+      login.style.borderRadius = "10px";
+      login.style.border = "1px solid rgba(255,255,255,0.2)";
+      login.style.background = "#ffffff";
+      login.style.color = "#0b1020";
+      login.style.fontWeight = "700";
+      login.style.cursor = "pointer";
+      login.addEventListener("click", () => {
+        if (opts.mode === "email") {
+          opts.onEmailLogin?.({
+            email: emailInput?.value || "",
+            password: passwordInput?.value || "",
+          });
+          return;
+        }
+        opts.onLogin?.();
+      });
+
+      const logout = document.createElement("button");
+      logout.type = "button";
+      logout.textContent = "Sign out";
+      logout.style.padding = "10px 14px";
+      logout.style.borderRadius = "10px";
+      logout.style.border = "1px solid rgba(255,255,255,0.2)";
+      logout.style.background = "transparent";
+      logout.style.color = "#fff";
+      logout.style.fontWeight = "700";
+      logout.style.cursor = "pointer";
+      logout.style.display = opts.showLogout ? "inline-flex" : "none";
+      logout.addEventListener("click", () => opts.onLogout?.());
+
+      actions.appendChild(login);
+      actions.appendChild(logout);
+
+      card.appendChild(title);
+      card.appendChild(body);
+      card.appendChild(error);
+      if (controls.childNodes.length) {
+        card.appendChild(controls);
+      }
+      card.appendChild(actions);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+    };
+
+    const hideStagingGate = () => {
+      const existing = document.getElementById("staging-gate");
+      if (existing) existing.remove();
+      const page = document.querySelector(".page");
+      if (page && page.dataset.stagingHidden === "true") {
+        delete page.dataset.stagingHidden;
+        page.style.visibility = "";
+      }
+    };
+
+    const ensureStagingContent = async () => {
+      if (!firebaseAuth) {
+        throw new Error("Firebase Auth is not available.");
+      }
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      const currentUser = firebaseAuth.currentUser;
+      const isAllowed = (user) => {
+        const email = (user?.email || "").toLowerCase();
+        return email && STAGING_ALLOWED_EMAILS.has(email);
+      };
+
+      const signedInUser = await new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+          unsubscribe();
+          resolve(user || null);
+        });
+      });
+
+      const user = signedInUser || currentUser;
+      if (!user) {
+        const mode = IS_LOCALHOST ? "email" : "google";
+        showStagingGate({
+          mode,
+          onLogin: async () => {
+            try {
+              await signInWithPopup(firebaseAuth, provider);
+              window.location.reload();
+            } catch (err) {
+              showStagingGate({
+                mode,
+                error: err?.message || "Sign-in failed.",
+                onLogin: async () => {
+                  await signInWithPopup(firebaseAuth, provider);
+                  window.location.reload();
+                },
+              });
+            }
+          },
+          onEmailLogin: async ({ email, password }) => {
+            try {
+              await signInWithEmailAndPassword(
+                firebaseAuth,
+                (email || "").trim(),
+                password || "",
+              );
+              // After sign-in, continue loading staging content without forcing a full reload.
+              hideStagingGate();
+              await ensureStagingContent();
+            } catch (err) {
+              showStagingGate({
+                mode,
+                error: err?.message || "Sign-in failed.",
+                onEmailLogin: async ({ email, password }) => {
+                  await signInWithEmailAndPassword(
+                    firebaseAuth,
+                    (email || "").trim(),
+                    password || "",
+                  );
+                  hideStagingGate();
+                  await ensureStagingContent();
+                },
+              });
+            }
+          },
+        });
+        return { pendingAuth: true };
+      }
+
+      if (!isAllowed(user)) {
+        showStagingGate({
+          error: `Not authorized: ${user.email || "unknown email"}`,
+          showLogout: true,
+          onLogout: async () => {
+            await signOut(firebaseAuth);
+            window.location.reload();
+          },
+          onLogin: async () => {
+            await signInWithPopup(firebaseAuth, provider);
+            window.location.reload();
+          },
+        });
+        throw new Error("Not authorized.");
+      }
+
+      showStagingGate({
+        message: `Signed in as ${user.email}. Loading staging content...`,
+        showLogout: true,
+        onLogout: async () => {
+          await signOut(firebaseAuth);
+          window.location.reload();
+        },
+        onLogin: async () => {
+          await signInWithPopup(firebaseAuth, provider);
+          window.location.reload();
+        },
+      });
+
+      // Local dev: avoid callable cross-origin CORS issues by reading the emulator directly.
+      if (IS_LOCALHOST) {
+        if (!firebaseDb) {
+          throw new Error("Firestore is not available.");
+        }
+        const fetchCollection = async (name, orderField) => {
+          const ref = collection(firebaseDb, name);
+          const q = orderField ? query(ref, orderBy(orderField)) : ref;
+          const snap = await getDocs(q);
+          return snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+        };
+
+        const [
+          STORAGE_ADDONS,
+          STORAGE_SEASON_ADDONS,
+          STORAGE_CONDITIONS,
+          STORAGE_ETIQUETTE,
+          i18nDocs,
+          STORAGE_SEASONS,
+          offers,
+          VEHICLE_TYPES,
+        ] = await Promise.all([
+          fetchCollection("storageAddOns", "order"),
+          fetchCollection("storageSeasonAddOns", "order"),
+          fetchCollection("storageConditions", "order"),
+          fetchCollection("storageEtiquette", "order"),
+          fetchCollection("i18nEntries", "key"),
+          fetchCollection("storageSeasons", "order"),
+          fetchCollection("storageOffers", "order"),
+          fetchCollection("vehicleTypes", "order"),
+        ]);
+
+        const offersBySeason = new Map();
+        offers.forEach((offer) => {
+          const seasonId = offer.seasonId;
+          if (!seasonId) return;
+          if (!offersBySeason.has(seasonId)) offersBySeason.set(seasonId, []);
+          offersBySeason.get(seasonId).push(offer);
+        });
+        STORAGE_SEASONS.forEach((season) => {
+          const seasonOffers = offersBySeason.get(season.id) || [];
+          seasonOffers.sort((a, b) => (a.order || 0) - (b.order || 0));
+          season.offers = seasonOffers;
+        });
+
+        const I18N_LOCAL = {};
+        i18nDocs.forEach((entry) => {
+          const key = entry.key || entry.id;
+          if (!key) return;
+          I18N_LOCAL[key] = entry.text || { en: "", fr: "" };
+        });
+
+        setWebsiteContentPayload({
+          STORAGE_ADDONS,
+          STORAGE_SEASON_ADDONS,
+          STORAGE_CONDITIONS,
+          STORAGE_ETIQUETTE,
+          STORAGE_SEASONS,
+          VEHICLE_TYPES,
+          I18N: I18N_LOCAL,
+        });
+        hideStagingGate();
+        return { pendingAuth: false };
+      }
+
+      if (!getWebsiteContentCallable) {
+        throw new Error("Staging endpoint is not available.");
+      }
+      const response = await getWebsiteContentCallable({ mode: "staging" });
+      const payload = response?.data || null;
+      if (!payload) {
+        throw new Error("No staging content returned.");
+      }
+      setWebsiteContentPayload(payload);
+      hideStagingGate();
+      return { pendingAuth: false };
+    };
+
+    if (IS_STAGING_PAGE) {
+      try {
+        const result = await ensureStagingContent();
+        if (result?.pendingAuth) {
+          // Auth UI is visible, stop booting the site until the user signs in.
+          return;
+        }
+      } catch (err) {
+        // Gate UI already displayed. Do not continue booting the public site.
+        console.warn("Staging boot halted", err);
+        if (typeof window !== "undefined" && window.__ENTREPOT_STAGING_FLAGS__) {
+          window.__ENTREPOT_STAGING_FLAGS__.stagingBootHalted = true;
+          window.__ENTREPOT_STAGING_FLAGS__.stagingBootError = err?.message || String(err);
+        }
+        return;
+      }
+    }
+
+    initFormStepper();
+    handleContactForm();
+    handleContractHelper();
+    clearLanguageIndicators();
+    applyLanguage(initialLanguage, {
+      skipPersist: !urlLanguage,
+      skipUrlSync: Boolean(urlLanguageRaw || hostLanguage),
+    });
+    initLanguageToggle();
+  })();
+};
+
+// site.js can be loaded dynamically by /staging after DOMContentLoaded already fired.
+// In that case, the event listener would never run, so we boot immediately.
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootEntrepotSite);
+  } else {
+    bootEntrepotSite();
   }
-
-  initFormStepper();
-  handleContactForm();
-  handleContractHelper();
-  clearLanguageIndicators();
-  applyLanguage(initialLanguage, {
-    skipPersist: !urlLanguage,
-    skipUrlSync: Boolean(urlLanguageRaw || hostLanguage),
-  });
-  initLanguageToggle();
-});
+}
