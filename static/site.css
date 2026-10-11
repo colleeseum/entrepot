@@ -314,6 +314,28 @@ img {
   grid-column: 1 / -1;
 }
 
+.season-card__availability {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.season-card--season-full .season-card__availability {
+  color: #b42318;
+}
+
+.season-card--season-limited .season-card__availability {
+  color: #9a6700;
+}
+
+.offer-availability--full {
+  color: #b42318;
+}
+
+.offer-availability--limited {
+  color: #9a6700;
+}
+
 .season-card ul {
   padding-left: 20px;
   color: var(--muted);

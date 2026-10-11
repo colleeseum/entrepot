@@ -311,7 +311,10 @@ const setWebsiteContentPayload = (payload) => {
   if (payload.STORAGE_SEASON_ADDONS) STORAGE_SEASON_ADDONS = payload.STORAGE_SEASON_ADDONS;
   if (payload.STORAGE_CONDITIONS) STORAGE_CONDITIONS = payload.STORAGE_CONDITIONS;
   if (payload.STORAGE_ETIQUETTE) STORAGE_ETIQUETTE = payload.STORAGE_ETIQUETTE;
-  if (payload.STORAGE_SEASONS) SEASON_DEFINITIONS = payload.STORAGE_SEASONS;
+  const liveSeasons = Array.isArray(payload.STORAGE_SEASONS)
+    ? payload.STORAGE_SEASONS.filter((season) => season && season.id)
+    : [];
+  if (liveSeasons.length) SEASON_DEFINITIONS = liveSeasons;
   if (payload.VEHICLE_TYPES) VEHICLE_TYPES = payload.VEHICLE_TYPES;
   if (payload.I18N) I18N = payload.I18N;
   rebuildGeneratedLookups();
@@ -569,13 +572,17 @@ const getVehicleLabelForLanguage = (value, lang = currentLanguage) => {
   return labels[lang] || labels[DEFAULT_LANGUAGE] || entry.value || value;
 };
 
-const populateVehicleOptionsForSelect = (select) => {
+const populateVehicleOptionsForSelect = (select, allowedVehicleTypeIds = null) => {
   if (!select) return;
   const selectedValue = select.value;
   select.querySelectorAll("option[data-vehicle-option]").forEach((option) => {
     option.remove();
   });
-  VEHICLE_TYPES.forEach((type) => {
+  VEHICLE_TYPES.filter((type) => {
+    if (!allowedVehicleTypeIds) return true;
+    const typeId = type.id || type.value;
+    return allowedVehicleTypeIds.has(typeId);
+  }).forEach((type) => {
     const option = document.createElement("option");
     option.value = type.id || type.value;
     option.dataset.vehicleOption = "true";
@@ -603,6 +610,7 @@ const LENGTH_REQUIRED_TYPE_SLUGS = new Set([
 const CONTRACT_FORM_MEMORY_PREFIX = "contract-helper-vehicle-";
 const CONTRACT_FORM_MEMORY_FIELDS = [
   "vehicleType",
+  "storageLocation",
   "vehicleTypeOther",
   "vehicleBrand",
   "vehicleModel",
@@ -724,6 +732,18 @@ const I18N_FALLBACKS = {
   "form.queue.missingVehicle": {
     en: "Please add a vehicle to your request.",
     fr: "Veuillez ajouter un véhicule à votre demande.",
+  },
+  "form.storageLocation.label": {
+    en: "Storage location",
+    fr: "Lieu d’entreposage",
+  },
+  "form.storageLocation.indoor": {
+    en: "Indoor",
+    fr: "Intérieur",
+  },
+  "form.storageLocation.outdoor": {
+    en: "Outdoor",
+    fr: "Extérieur",
   },
   "form.queue.remove": {
     en: "Remove",
@@ -907,10 +927,13 @@ const getSeasonPickupDate = (seasonValue) => {
 
 const getAllSeasonCards = () => [...SEASON_DEFINITIONS, SHARED_POLICY_CARD];
 
+const getSeasonLabelMap = (season) =>
+  season?.seasonLabel || season?.label || season?.name || null;
+
 const getSeasonLabelForLanguage = (seasonId, lang = currentLanguage) => {
   const season = SEASON_LOOKUP[seasonId];
   if (!season) return "";
-  return getLocalizedText(season.seasonLabel, lang);
+  return getLocalizedText(getSeasonLabelMap(season), lang);
 };
 
 const populateSeasonOptionsForSelect = (select) => {
@@ -935,8 +958,9 @@ const findSeasonByLabel = (label = "") => {
   if (!label) return null;
   const normalized = label.toLowerCase();
   return SEASON_DEFINITIONS.find((season) => {
-    const en = getLocalizedText(season.seasonLabel, "en").toLowerCase();
-    const fr = getLocalizedText(season.seasonLabel, "fr").toLowerCase();
+    const seasonLabel = getSeasonLabelMap(season);
+    const en = getLocalizedText(seasonLabel, "en").toLowerCase();
+    const fr = getLocalizedText(seasonLabel, "fr").toLowerCase();
     return normalized === en || normalized === fr;
   });
 };
@@ -969,7 +993,7 @@ const lengthMatchesRange = (length, range) => {
 
 const offerSupportsVehicleType = (offer, vehicleTypeId) => {
   if (!offer || !Array.isArray(offer.vehicleTypes) || !vehicleTypeId) return false;
-  if (offer.vehicleTypes.length === 0) return true;
+  if (offer.vehicleTypes.length === 0) return false;
   if (offer.vehicleTypes.includes(vehicleTypeId)) return true;
   const entry = getVehicleTypeEntry(vehicleTypeId);
   if (!entry) {
@@ -997,6 +1021,21 @@ const getOffersForType = (season, vehicleType) => {
   );
 };
 
+const getOfferStorageLocation = (offer) => {
+  if (offer?.storageLocation === "outdoor") return "outdoor";
+  if (offer?.storageLocation === "indoor") return "indoor";
+  if (offer?.storageLocation == null && /outdoor|ext[ée]rieur/i.test(`${offer?.id || ""} ${offer?.label?.en || ""} ${offer?.label?.fr || ""}`)) return "outdoor";
+  return "indoor";
+};
+
+const getOffersForRequest = (season, vehicleType, storageLocation = "indoor") => {
+  if (!season || !vehicleType) return [];
+  return season.offers.filter((offer) => {
+    if (getOfferStorageLocation(offer) !== storageLocation) return false;
+    return offerSupportsVehicleType(offer, vehicleType);
+  });
+};
+
 const getSeasonAddonPrice = (seasonId = "", code = "") => {
   if (!seasonId || !code) return null;
   const entry = STORAGE_SEASON_ADDONS.find(
@@ -1005,6 +1044,27 @@ const getSeasonAddonPrice = (seasonId = "", code = "") => {
   if (!entry) return null;
   return typeof entry.price === "number" ? entry.price : Number(entry.price) || 0;
 };
+
+const getOfferAvailability = (offer) =>
+  ["available", "limited", "full"].includes(offer?.availability)
+    ? offer.availability
+    : "available";
+
+const getOfferAvailabilityLabel = (availability, lang = currentLanguage) => {
+  if (availability === "full") return lang === "fr" ? "Complet" : "Full";
+  if (availability === "limited") {
+    return lang === "fr" ? "Disponibilité limitée" : "Limited availability";
+  }
+  return "";
+};
+
+const getSeasonAvailability = (season) =>
+  ["available", "limited", "full"].includes(season?.availability)
+    ? season.availability
+    : "available";
+
+const isSeasonFull = (seasonId) =>
+  getSeasonAvailability(SEASON_LOOKUP[seasonId]) === "full";
 
 const computeOfferPrice = (offer, context) => {
   if (!offer || !offer.price) return null;
@@ -1026,9 +1086,19 @@ const estimateRentalCost = (values) => {
   if (!season || !values.vehicleType) {
     return "";
   }
-  const offers = getOffersForType(season, values.vehicleType);
+  if (getSeasonAvailability(season) === "full") {
+    return getOfferAvailabilityLabel("full");
+  }
+  const offers = getOffersForRequest(
+    season,
+    values.vehicleType,
+    values.storageLocation,
+  );
   if (!offers.length) {
     return getMessage("messages.contactForPricing");
+  }
+  if (offers.length === 1 && getOfferAvailability(offers[0]) === "full") {
+    return getOfferAvailabilityLabel("full");
   }
   const length = Number.parseFloat(values.vehicleLength);
   const numericLength = Number.isFinite(length) ? length : null;
@@ -1039,7 +1109,11 @@ const estimateRentalCost = (values) => {
   const matchedOffer = offers.find((offer) =>
     lengthMatchesRange(numericLength, offer.lengthRange),
   );
-  const offer = matchedOffer || offers[offers.length - 1];
+  const offer = matchedOffer;
+  if (!offer) return getMessage("messages.contactForPricing");
+  if (getOfferAvailability(offer) === "full") {
+    return getOfferAvailabilityLabel("full");
+  }
   const baseAmount = computeOfferPrice(offer, { length: numericLength });
   if (!Number.isFinite(baseAmount)) {
     return getMessage("messages.contactForPricing");
@@ -1316,6 +1390,7 @@ const buildVehicleRequestPayload = (data) => {
   const vehicleType = data.vehicleType || "";
   return {
     season: data.season || "",
+    storageLocation: data.storageLocation || "indoor",
     vehicleType,
     vehicleTypeLabel: getVehicleLabelForLanguage(vehicleType),
     vehicleTypeOther: data.vehicleTypeOther || "",
@@ -1337,20 +1412,40 @@ const buildVehicleRequestPayload = (data) => {
 };
 
 const formatOfferPriceDisplay = (offer, lang = currentLanguage) => {
-  if (!offer || !offer.price) return "";
-  if (offer.price.mode === "flat") {
-    return formatCurrency(offer.price.amount, lang);
+  const availability = getOfferAvailability(offer);
+  if (availability === "full") {
+    return getOfferAvailabilityLabel(availability, lang);
   }
-  if (offer.price.mode === "perFoot") {
+  if (!offer || !offer.price) return "";
+  const availabilityLabel = getOfferAvailabilityLabel(availability, lang);
+  let priceDisplay = "";
+  if (offer.price.mode === "flat") {
+    priceDisplay = formatCurrency(offer.price.amount, lang);
+  } else if (offer.price.mode === "perFoot") {
     const rate = formatCurrency(offer.price.rate, lang, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
     const unit =
       getLocalizedText(offer.price.unit, lang) || (lang === "fr" ? "/ pi" : "/ ft");
-    return `${rate} ${unit}`;
+    priceDisplay = `${rate} ${unit}`;
+  } else {
+    priceDisplay = getMessage("messages.contactForPricing", lang);
   }
-  return getMessage("messages.contactForPricing", lang);
+  return availabilityLabel ? `${priceDisplay} · ${availabilityLabel}` : priceDisplay;
+};
+
+const getSelectedOfferForRequest = (values) => {
+  const season = SEASON_LOOKUP[values?.season];
+  if (!season || !values?.vehicleType) return null;
+  const offers = getOffersForRequest(
+    season,
+    values.vehicleType,
+    values.storageLocation,
+  );
+  const length = Number.parseFloat(values.vehicleLength);
+  const numericLength = Number.isFinite(length) ? length : null;
+  return offers.find((offer) => lengthMatchesRange(numericLength, offer.lengthRange)) || null;
 };
 
 const formatOfferNote = (offer, lang = currentLanguage) => {
@@ -1381,13 +1476,19 @@ const buildSeasonCards = () => {
     const card = document.createElement("article");
     card.className = "season-card";
     const isSharedPolicyCard = season.id === "shared";
+    const seasonAvailability = getSeasonAvailability(season);
     if (isSharedPolicyCard) {
       card.classList.add("season-card--full");
+    }
+    if (seasonAvailability === "full") {
+      card.classList.add("season-card--season-full");
+    } else if (seasonAvailability === "limited") {
+      card.classList.add("season-card--season-limited");
     }
     const heading = document.createElement("div");
     const seasonLabel = document.createElement("p");
     seasonLabel.className = "eyebrow";
-    seasonLabel.textContent = getLocalizedText(season.seasonLabel);
+    seasonLabel.textContent = getLocalizedText(getSeasonLabelMap(season));
     if (isSharedPolicyCard) {
       const key = "sharedPolicies.seasonLabel";
       markDynamicI18nEditTarget(seasonLabel, key, {
@@ -1426,6 +1527,13 @@ const buildSeasonCards = () => {
       heading.appendChild(timeframe);
     }
 
+    if (seasonAvailability !== "available") {
+      const availability = document.createElement("p");
+      availability.className = "season-card__availability";
+      availability.textContent = getOfferAvailabilityLabel(seasonAvailability);
+      heading.appendChild(availability);
+    }
+
     let table = null;
     if (season.offers && season.offers.length) {
       const visibleOffers = season.offers.filter((offer) => !offer.hideInTable);
@@ -1446,7 +1554,18 @@ const buildSeasonCards = () => {
             label.textContent = getLocalizedText(offer.label);
           }
           const price = document.createElement("td");
-          price.textContent = formatOfferPriceDisplay(offer);
+          const offerAvailability = getOfferAvailability(offer);
+          if (seasonAvailability === "full" || offerAvailability !== "available") {
+            price.classList.add(
+              `offer-availability--${
+                seasonAvailability === "full" ? "full" : offerAvailability
+              }`,
+            );
+          }
+          price.textContent =
+            seasonAvailability === "full"
+              ? getOfferAvailabilityLabel("full")
+              : formatOfferPriceDisplay(offer);
           row.appendChild(label);
           row.appendChild(price);
           table.appendChild(row);
@@ -1635,6 +1754,9 @@ const initFormStepper = () => {
   const tenantPhoneInput = form.querySelector('input[name="tenantPhone"]');
   const depositInput = form.querySelector('input[name="deposit"]');
   const vehicleTypeSelect = document.getElementById("vehicle-type-select");
+  const storageLocationSelect = form.querySelector(
+    'select[name="storageLocation"]',
+  );
   const insuranceExpirationInput = form.querySelector(
     'input[name="insuranceExpiration"]',
   );
@@ -1747,8 +1869,36 @@ const initFormStepper = () => {
     populateSeasonOptionsForSelect(seasonSelect);
   };
 
+  const getAllowedVehicleTypeIds = () => {
+    const season = SEASON_LOOKUP[seasonSelect?.value];
+    const location = storageLocationSelect?.value || "indoor";
+    if (!season) return null;
+    if (getSeasonAvailability(season) === "full") return new Set();
+    const matchingOffers = (season.offers || []).filter(
+      (offer) =>
+        getOfferStorageLocation(offer) === location &&
+        getOfferAvailability(offer) !== "full",
+    );
+    if (!matchingOffers.length) return new Set();
+    if (
+      matchingOffers.some(
+        (offer) => !Array.isArray(offer.vehicleTypes) || !offer.vehicleTypes.length,
+      )
+    ) {
+      return null;
+    }
+    const allowed = new Set();
+    matchingOffers.forEach((offer) => {
+      offer.vehicleTypes.forEach((value) => {
+        const entry = getVehicleTypeEntry(value);
+        allowed.add(entry?.id || value);
+      });
+    });
+    return allowed;
+  };
+
   const populateVehicleTypeOptions = () => {
-    populateVehicleOptionsForSelect(vehicleTypeSelect);
+    populateVehicleOptionsForSelect(vehicleTypeSelect, getAllowedVehicleTypeIds());
   };
 
   const applyDepositRule = (estimatedValue) => {
@@ -1800,6 +1950,7 @@ const initFormStepper = () => {
   };
   if (seasonSelect) {
     seasonSelect.addEventListener("change", () => {
+      populateVehicleTypeOptions();
       updateLeaseDuration();
       updateEstimatedCost();
       updateInsuranceExpirationWarning();
@@ -1897,6 +2048,26 @@ const initFormStepper = () => {
     updatePropaneAvailability();
   }
 
+  if (storageLocationSelect) {
+    storageLocationSelect.addEventListener("change", () => {
+      populateVehicleTypeOptions();
+      if (
+        vehicleTypeSelect &&
+        vehicleTypeSelect.value &&
+        !Array.from(vehicleTypeSelect.options).some(
+          (option) => option.value === vehicleTypeSelect.value,
+        )
+      ) {
+        vehicleTypeSelect.value = "";
+        if (vehicleTypeOther) {
+          vehicleTypeOther.classList.add("hidden");
+        }
+      }
+      updateEstimatedCost();
+      saveFormMemory();
+    });
+  }
+
   const resetVehicleButton = form.querySelector("[data-reset-vehicle]");
   const clearVehicleMemory = () => {
     const currentType = vehicleTypeSelect?.value;
@@ -1913,6 +2084,8 @@ const initFormStepper = () => {
       if (!field) return;
       if (field.type === "checkbox") {
         field.checked = false;
+      } else if (name === "storageLocation") {
+        field.value = "indoor";
       } else {
         field.value = "";
       }
@@ -1957,6 +2130,7 @@ const initFormStepper = () => {
   populateSeasonSelect();
   populateVehicleTypeOptions();
   applyFormMemory();
+  populateVehicleTypeOptions();
   updateLengthRequirement();
   updatePropaneAvailability();
   updateLeaseDuration();
@@ -2428,6 +2602,18 @@ const handleContractHelper = () => {
       setContractStatus(getTranslation("form.queue.missingVehicle"), "error");
       return;
     }
+    const selectedOffer = getSelectedOfferForRequest(payload);
+    if (!selectedOffer && !isSeasonFull(payload.season)) {
+      setContractStatus(currentLanguage === "fr" ? "Aucune offre disponible pour ce véhicule et cet emplacement." : "No offer is available for this vehicle and storage location.", "error");
+      return;
+    }
+    if (
+      isSeasonFull(payload.season) ||
+      getOfferAvailability(selectedOffer) === "full"
+    ) {
+      setContractStatus(getOfferAvailabilityLabel("full"), "error");
+      return;
+    }
     queuedRequests.push(payload);
     if (typeof resetContractVehicleFields === "function") {
       resetContractVehicleFields();
@@ -2499,6 +2685,26 @@ const handleContractHelper = () => {
     }
     if (!requests.length) {
       setContractStatus(getTranslation("form.queue.missingVehicle"), "error");
+      return;
+    }
+
+    if (
+      isSeasonFull(tenantPayload.season) ||
+      requests.some((request) =>
+        getOfferAvailability(
+          getSelectedOfferForRequest({
+            ...request,
+            season: tenantPayload.season,
+          }),
+        ) === "full",
+      )
+    ) {
+      setContractStatus(getOfferAvailabilityLabel("full"), "error");
+      return;
+    }
+
+    if (requests.some((request) => !getSelectedOfferForRequest({ ...request, season: tenantPayload.season }))) {
+      setContractStatus(currentLanguage === "fr" ? "Aucune offre disponible pour ce véhicule et cet emplacement." : "No offer is available for this vehicle and storage location.", "error");
       return;
     }
 
@@ -3470,9 +3676,7 @@ const bootEntrepotSite = () => {
                 (email || "").trim(),
                 password || "",
               );
-              // After sign-in, continue loading staging content without forcing a full reload.
-              hideStagingGate();
-              await ensureStagingContent();
+              window.location.reload();
             } catch (err) {
               showStagingGate({
                 mode,
@@ -3483,8 +3687,7 @@ const bootEntrepotSite = () => {
                     (email || "").trim(),
                     password || "",
                   );
-                  hideStagingGate();
-                  await ensureStagingContent();
+                  window.location.reload();
                 },
               });
             }
