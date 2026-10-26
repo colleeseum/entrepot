@@ -124,6 +124,7 @@ img {
 }
 
 .language-toggle__btn {
+  text-decoration: none;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: transparent;
   color: #f8fafc;
@@ -155,7 +156,7 @@ img {
   border-radius: 32px;
   padding: 48px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 40px;
   box-shadow: var(--shadow);
 }
@@ -275,11 +276,12 @@ img {
 .season-grid {
   margin-top: 32px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 24px;
 }
 
 .season-card {
+  min-width: 0;
   padding: 24px;
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -392,6 +394,7 @@ img {
 }
 
 .info-badge::after {
+  display: none;
   content: attr(data-tooltip);
   position: absolute;
   left: 50%;
@@ -414,6 +417,7 @@ img {
 
 .info-badge:hover::after,
 .info-badge:focus-visible::after {
+  display: block;
   opacity: 1;
 }
 
@@ -423,7 +427,7 @@ img {
 .contact__grid {
   margin-top: 32px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 24px;
 }
 
@@ -900,9 +904,6 @@ html[data-i18n-edit="true"] .i18n-missing-translation {
     align-items: stretch;
   }
 
-  #contract-helper {
-    display: none;
-  }
 }
 
 @media (max-width: 600px) {
@@ -1226,10 +1227,25 @@ textarea {
   transform-origin: left top;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 768px) {
+  .center,
+  .contract-helper-card,
+  .contact__grid > article {
+    min-width: 0;
+  }
+
+  .form-row--name-phone,
+  .form-row--vehicle.form-row--vehicle-triple {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vehicle-type-row__select {
+    min-width: 0;
+  }
+
   .captcha-field__widget {
-    min-height: 64px;
-    transform: scale(0.82);
+    min-width: 0;
+    min-height: 144px;
   }
 }
 
@@ -1518,4 +1534,19 @@ A:hover {
 .form-step label input[required],
 .form-step label textarea[required] {
   background-color: #fffdfa;
+}
+
+@media (max-width: 768px) {
+  .season-card td:last-child {
+    white-space: normal;
+  }
+
+  .info-badge::after {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    transform: none;
+  }
 }

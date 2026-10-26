@@ -1,3 +1,4 @@
+import { I18N_FALLBACKS } from "./i18n-fallbacks.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
 import {
@@ -199,8 +200,8 @@ let resetContractVehicleFields = () => {};
 let refreshContractEstimate = () => {};
 
 const CONTRACT_TEMPLATES = {
-  en: "./static/documents/contract-en.pdf",
-  fr: "./static/documents/contract-fr.pdf",
+  en: "/static/documents/contract-en.pdf",
+  fr: "/static/documents/contract-fr.pdf",
 };
 
 const ensureGeneratedData = (value, label) => {
@@ -494,6 +495,7 @@ const setupRecaptchaWidget = (container) => {
         try {
           state.widgetId = window.grecaptcha.render(container, {
             sitekey: RECAPTCHA_SITE_KEY,
+            size: window.matchMedia("(max-width: 768px)").matches ? "compact" : "normal",
             callback: (token) => {
               if (typeof state.onChange === "function") {
                 state.onChange(token || "");
@@ -722,69 +724,6 @@ const formatPdfDate = (value = "") => {
     return `${month}/${day}/${year}`;
   }
   return value;
-};
-
-const I18N_FALLBACKS = {
-  "form.queue.added": {
-    en: "Vehicle added to your request.",
-    fr: "Véhicule ajouté à votre demande.",
-  },
-  "form.queue.missingVehicle": {
-    en: "Please add a vehicle to your request.",
-    fr: "Veuillez ajouter un véhicule à votre demande.",
-  },
-  "form.storageLocation.label": {
-    en: "Storage location",
-    fr: "Lieu d’entreposage",
-  },
-  "form.storageLocation.indoor": {
-    en: "Indoor",
-    fr: "Intérieur",
-  },
-  "form.storageLocation.outdoor": {
-    en: "Outdoor",
-    fr: "Extérieur",
-  },
-  "form.queue.remove": {
-    en: "Remove",
-    fr: "Retirer",
-  },
-  "form.requestStatus.error": {
-    en: "Unable to submit the request right now. Please try again.",
-    fr: "Impossible d’envoyer la demande pour l’instant. Veuillez réessayer.",
-  },
-  "form.requestStatus.sending": {
-    en: "Sending your request…",
-    fr: "Envoi de votre demande…",
-  },
-  "form.requestStatus.success": {
-    en: "Request sent. Confirmation number: {{confirmation}}. We will contact you at {{email}}.",
-    fr: "Demande envoyée. Numéro de confirmation : {{confirmation}}. Nous vous contacterons à {{email}}.",
-  },
-  "form.requestStatus.successNoCode": {
-    en: "Request sent. We will contact you at {{email}}.",
-    fr: "Demande envoyée. Nous vous contacterons à {{email}}.",
-  },
-  "form.requestStatus.unavailable": {
-    en: "Request service unavailable. Please try again later.",
-    fr: "Service de demande indisponible. Veuillez réessayer plus tard.",
-  },
-  "form.captcha.error": {
-    en: "Please complete the captcha before submitting your request.",
-    fr: "Veuillez compléter le captcha avant d’envoyer votre demande.",
-  },
-  "form.captcha.hint": {
-    en: "This helps us block automated submissions.",
-    fr: "Cela nous aide à bloquer les envois automatisés.",
-  },
-  "form.captcha.label": {
-    en: "Security check",
-    fr: "Vérification de sécurité",
-  },
-  "form.captcha.unavailable": {
-    en: "Security check is still loading. Please wait a moment and try again.",
-    fr: "La vérification de sécurité est encore en chargement. Veuillez patienter et réessayer.",
-  },
 };
 
 const getTranslation = (key, lang = currentLanguage) => {
@@ -3306,7 +3245,7 @@ const applyTranslationsForLanguage = (lang) => {
       el.textContent = key;
       return;
     }
-    const translation = getTranslation(key, lang);
+    const translation = getTranslation(key, lang) || getTranslation(el.dataset.i18nFallbackKey, lang);
     if (!translation) return;
     translatedCount += 1;
     const attrTargets = el.dataset.i18nAttr
@@ -3391,15 +3330,25 @@ const applyLanguage = (lang, { skipPersist, skipUrlSync } = {}) => {
   }
 };
 
+// Native links work without JavaScript. Preserve section and staging context.
 const initLanguageToggle = () => {
-  const buttons = document.querySelectorAll("[data-lang-toggle]");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const lang = btn.dataset.langToggle;
-      if (!lang || lang === currentLanguage) return;
-      applyLanguage(lang);
+  const syncLinks = () => {
+    document.querySelectorAll("[data-lang-toggle]").forEach((link) => {
+      const lang = link.dataset.langToggle;
+      const target = new URL(IS_STAGING_PAGE ? window.location.pathname : `/${lang}/`, window.location.origin);
+      if (IS_STAGING_PAGE) {
+        target.search = window.location.search;
+        target.searchParams.set("lang", lang);
+      }
+      const hash = window.location.hash;
+      if (hash && !SUPPORTED_LANGUAGES.includes(hash.slice(1))) target.hash = hash;
+      link.href = `${target.pathname}${target.search}${target.hash}`;
+      if (lang === currentLanguage) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
     });
-  });
+  };
+  syncLinks();
+  window.addEventListener("hashchange", syncLinks);
 };
 
 const getStoredLanguage = () => {
@@ -3410,18 +3359,6 @@ const getStoredLanguage = () => {
       return normalized;
     }
   } catch (err) {}
-  return null;
-};
-
-const getLanguageFromHostname = () => {
-  const hostname = (window.location.hostname || "").toLowerCase();
-  if (!hostname) return null;
-  if (hostname.includes("entrepot")) {
-    return "fr";
-  }
-  if (hostname.includes("warehouse")) {
-    return "en";
-  }
   return null;
 };
 
@@ -3449,11 +3386,13 @@ const bootEntrepotSite = () => {
     }
     renderStagingModeToggle();
     const urlLanguageRaw = getLanguageFromUrl();
-    const storedLanguage = getStoredLanguage();
-    const urlLanguage = storedLanguage ? null : urlLanguageRaw;
-    const hostLanguage = getLanguageFromHostname();
-    const initialLanguage =
-      storedLanguage || urlLanguage || hostLanguage || DEFAULT_LANGUAGE;
+    const pathLanguage = window.location.pathname.match(/^\/(en|fr)(?:\/|$)/)?.[1];
+    // Explicit public language paths always win over saved preferences and hostnames.
+    const initialLanguage = pathLanguage || (IS_STAGING_PAGE
+      ? urlLanguageRaw || getStoredLanguage() || DEFAULT_LANGUAGE
+      : document.documentElement.lang || DEFAULT_LANGUAGE);
+    const urlLanguage = urlLanguageRaw;
+    const hostLanguage = null;
 
     currentLanguage = initialLanguage;
     if (typeof document !== "undefined") {

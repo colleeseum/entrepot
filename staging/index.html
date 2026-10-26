@@ -42,7 +42,7 @@
           }
           const el = node.cloneNode(true);
           const tag = el.tagName;
-          if (tag === "BASE") {
+          if (tag === "BASE" || (tag === "LINK" && ["canonical", "alternate"].includes(el.getAttribute("rel"))) || (tag === "SCRIPT" && el.type === "application/ld+json")) {
             return;
           }
           if (tag === "LINK") {

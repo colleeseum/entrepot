@@ -140,13 +140,24 @@ jobs:
             -d "{\"publishId\":\"${PUBLISH_ID}\",\"status\":\"deploy_started\",\"details\":null}"
         shell: bash
 
+      - name: Set up site build
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build crawlable language pages
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm test
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy
         id: deployment
