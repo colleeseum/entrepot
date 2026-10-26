@@ -63,17 +63,21 @@ test('database translations remain authoritative, including new SEO fields', asy
   const template = await readFile(new URL('../templates/home.html', import.meta.url), 'utf8');
   for (const lang of ['en', 'fr']) {
     const updated = { ...I18N, 'hero.title': { [lang]: 'Owner edited title' }, 'hero.description': { [lang]: 'Owner edited introduction' }, 'seo.title': { [lang]: 'Owner edited search title' }, 'seo.description': { [lang]: 'Owner edited search description' } };
+    // Deliberately omit a required key instead of assuming the export lacks arrival copy.
+    delete updated['access.heading'];
     const { document } = parseHTML(renderPage(template, lang, { i18n: updated, seasons: STORAGE_SEASONS, conditions: STORAGE_CONDITIONS }));
     assert.equal(document.querySelector('h1').textContent, 'Owner edited title');
     assert.equal(document.querySelector('[data-i18n="hero.description"]').textContent, 'Owner edited introduction');
     assert.equal(document.title, 'Owner edited search title');
     assert.equal(document.querySelector('meta[name="description"]').content, 'Owner edited search description');
-    assert.equal(document.getElementById('arrival'), null);
+    assert.equal(Boolean(document.getElementById('arrival')), false);
   }
 });
 test('reviewed database changes render after export and refuse conflicting edits', async () => {
   const { changes } = JSON.parse(await readFile(new URL('../database/seo-content.changes.json', import.meta.url), 'utf8'));
-  const docs = Object.entries(I18N).map(([key, text]) => ({ id: key, key, text }));
+  // Migration expectations come from the reviewed before/after fixture, never mutable live copy.
+  const docs = changes.filter(change => change.before !== null)
+    .map(change => ({ id: change.key, key: change.key, text: change.before }));
   assert.equal(planContentChanges(changes, docs).length, changes.length);
   const updated = { ...I18N, ...Object.fromEntries(changes.map(change => [change.key, change.after])) };
   const template = await readFile(new URL('../templates/home.html', import.meta.url), 'utf8');
