@@ -1,5 +1,4 @@
 import { I18N_FALLBACKS } from "./i18n-fallbacks.js";
-import { withMarketingContent } from "./marketing-content.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
 import {
@@ -236,7 +235,7 @@ let VEHICLE_TYPES = ensureGeneratedData(
   GENERATED_VEHICLE_TYPES,
   "VEHICLE_TYPES",
 );
-let I18N = withMarketingContent(ensureGeneratedData(GENERATED_I18N, "I18N"));
+let I18N = ensureGeneratedData(GENERATED_I18N, "I18N");
 
 const slugifyVehicleType = (value = "") =>
   value
@@ -318,7 +317,7 @@ const setWebsiteContentPayload = (payload) => {
     : [];
   if (liveSeasons.length) SEASON_DEFINITIONS = liveSeasons;
   if (payload.VEHICLE_TYPES) VEHICLE_TYPES = payload.VEHICLE_TYPES;
-  if (payload.I18N) I18N = withMarketingContent(payload.I18N);
+  if (payload.I18N) I18N = payload.I18N;
   rebuildGeneratedLookups();
 };
 
@@ -3246,7 +3245,7 @@ const applyTranslationsForLanguage = (lang) => {
       el.textContent = key;
       return;
     }
-    const translation = getTranslation(key, lang);
+    const translation = getTranslation(key, lang) || getTranslation(el.dataset.i18nFallbackKey, lang);
     if (!translation) return;
     translatedCount += 1;
     const attrTargets = el.dataset.i18nAttr

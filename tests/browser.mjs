@@ -1,3 +1,4 @@
+import { I18N } from '../static/generated/website-text.generated.js';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -23,7 +24,7 @@ try {
   const page = await nojs.newPage();
   for (const route of ['/', '/en/', '/fr/']) {
     assert.equal((await page.goto(`${base}${route}`)).status(), 200);
-    assert.match(await page.locator('h1').innerText(), /Alfred/);
+    assert.equal(await page.locator('h1').innerText(), I18N['hero.title'][route === '/fr/' ? 'fr' : 'en']);
     assert.ok((await page.locator('#season-grid').innerText()).length > 800);
   }
   await page.locator('[data-lang-toggle="en"]').click();
@@ -45,6 +46,7 @@ try {
       await p.goto(`${base}/${lang}/`);
       await p.waitForFunction(() => document.querySelector('#contract-helper select[name="season"]').options.length > 1);
       assert.equal(await p.locator('html').getAttribute('lang'), lang);
+      assert.equal(await p.locator('h1').innerText(), I18N['hero.title'][lang]);
       assert.equal(await p.locator('html').evaluate(el => el.scrollWidth <= window.innerWidth), true, `${lang} overflow at ${width}`);
       await p.screenshot({ path: `test-results/${lang}-${width}.png`, fullPage: true });
       await p.screenshot({ path: `test-results/${lang}-${width}-hero.png` });

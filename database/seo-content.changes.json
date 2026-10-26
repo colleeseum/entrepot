@@ -1,0 +1,210 @@
+{
+  "collection": "i18nEntries",
+  "description": "Proposed SEO copy for review. Not imported by the site or build. Apply to the database separately, then run the normal Tracker export/publish flow.",
+  "changes": [
+    {
+      "key": "seo.title",
+      "before": null,
+      "after": {
+        "en": "Indoor & Seasonal Vehicle Storage in Alfred | Ferme Colle",
+        "fr": "Entreposage intérieur et saisonnier à Alfred | Ferme Colle"
+      }
+    },
+    {
+      "key": "seo.description",
+      "before": null,
+      "after": {
+        "en": "Indoor and seasonal storage for RVs, trailers, cars and motorcycles in Alfred, near Plantagenet and Curran. Serving customers from Ottawa and Montréal.",
+        "fr": "Entreposage intérieur et saisonnier de VR, roulottes, voitures et motos à Alfred, près de Plantagenet et Curran. Clients d’Ottawa et de Montréal bienvenus."
+      }
+    },
+    {
+      "key": "hero.title",
+      "before": {
+        "en": "Protect your RV, car or sled in every season",
+        "fr": "Protégez votre VR, voiture ou motoneige en toute saison"
+      },
+      "after": {
+        "en": "Indoor and seasonal vehicle storage in Alfred, Ontario",
+        "fr": "Entreposage intérieur et saisonnier de véhicules à Alfred, en Ontario"
+      }
+    },
+    {
+      "key": "hero.eyebrow",
+      "before": {
+        "en": "Indoor & outdoor vehicle storage",
+        "fr": "Entreposage intérieur et extérieur de véhicules"
+      },
+      "after": {
+        "en": "Ferme Colle vehicle storage",
+        "fr": "Entreposage de véhicules à la Ferme Colle"
+      }
+    },
+    {
+      "key": "hero.description",
+      "before": {
+        "en": "Two curated storage seasons with concrete floors, easy highway access, and bilingual support. Drop off in Alfred, Ontario; pay once; pick up on your schedule.",
+        "fr": "Deux saisons d’entreposage avec planchers en béton, accès rapide aux routes principales et soutien bilingue. Déposez à Alfred, en Ontario, payez une fois et récupérez selon votre horaire."
+      },
+      "after": {
+        "en": "Store your RV, trailer, car or motorcycle at Ferme Colle in Alfred, near Plantagenet and Curran. Our Alfred facility also serves customers travelling from Ottawa and Montréal. Choose a seasonal plan and arrange drop-off and pickup with us.",
+        "fr": "Confiez votre VR, roulotte, voiture ou moto à la Ferme Colle, à Alfred, près de Plantagenet et de Curran. Notre installation à Alfred accueille aussi les clients qui se déplacent d’Ottawa et de Montréal. Choisissez votre entreposage saisonnier et convenez avec nous du dépôt et de la récupération."
+      }
+    },
+    {
+      "key": "hero.caption",
+      "before": {
+        "en": "Vehicles are stored inside a secure, controlled area.",
+        "fr": "Les véhicules sont entreposés dans une aire contrôlée sécurisée."
+      },
+      "after": {
+        "en": "The vehicle storage facility at Ferme Colle in Alfred, Ontario.",
+        "fr": "Les installations d’entreposage de véhicules de la Ferme Colle à Alfred, en Ontario."
+      }
+    },
+    {
+      "key": "facility.heading",
+      "before": {
+        "en": "Purpose-built storage only 45 minutes east of Ottawa / 60 minutes west of Montreal",
+        "fr": "Un entreposage conçu sur mesure à 45 minutes d’Ottawa et 60 minutes de Montréal"
+      },
+      "after": {
+        "en": "Vehicle storage in Alfred, near Plantagenet and Curran",
+        "fr": "Entreposage à Alfred, près de Plantagenet et de Curran"
+      }
+    },
+    {
+      "key": "facility.description",
+      "before": {
+        "en": "Located in Alfred, Ontario with multiple indoor warehouses for RVs, cars and sleds, plus drive-through lanes and an outdoor yard poured in concrete. The same family that runs Ferme Colle oversees every check-in.",
+        "fr": "Situé à Alfred, en Ontario, avec plusieurs entrepôts intérieurs pour VR, voitures et motoneiges, des allées traversantes et une cour extérieure en béton. La même famille que la Ferme Colle supervise chaque arrivée."
+      },
+      "after": {
+        "en": "Indoor seasonal storage is available for vehicles listed in our plans, including RVs, trailers, cars, motorcycles and snowmobiles. Available space depends on the season and vehicle. Contact us with the overall dimensions to confirm suitability before booking.",
+        "fr": "L’entreposage intérieur saisonnier est offert pour les véhicules de nos plans, dont les VR, roulottes, voitures, motos et motoneiges. Les places disponibles dépendent de la saison et du véhicule. Communiquez-nous les dimensions hors tout pour confirmer la compatibilité avant de réserver."
+      }
+    },
+    {
+      "key": "facility.indoor.body",
+      "before": {
+        "en": "Non-heated warehouse bays with 20 ft clearance keep vehicles dry and away from UV exposure.",
+        "fr": "Des baies d’entrepôt non chauffées avec 20 pi de dégagement gardent les véhicules au sec et à l’abri des UV."
+      },
+      "after": {
+        "en": "Indoor warehouse storage keeps vehicles under cover. Confirm your vehicle’s overall length, width and height with us before arranging delivery.",
+        "fr": "L’entreposage en entrepôt garde les véhicules à l’abri. Confirmez avec nous la longueur, la largeur et la hauteur hors tout avant de prévoir le dépôt."
+      }
+    },
+    {
+      "key": "facility.outdoor.title",
+      "before": {
+        "en": "Concrete outdoor pads",
+        "fr": "Dalles extérieures en béton"
+      },
+      "after": {
+        "en": "Outdoor storage options",
+        "fr": "Options d’entreposage extérieur"
+      }
+    },
+    {
+      "key": "facility.outdoor.body",
+      "before": {
+        "en": "For economical storage, our concrete and gravel outdoor pads accommodate vehicles of every type.",
+        "fr": "Pour des économies, nos dalles extérieures en béton et nos aires en gravier accueillent des véhicules de tous types."
+      },
+      "after": {
+        "en": "Outdoor options appear in the seasonal plans when offered. Ask us to confirm the space and surface suitable for your vehicle.",
+        "fr": "Les options extérieures figurent dans les plans saisonniers lorsqu’elles sont offertes. Demandez-nous de confirmer l’espace et la surface qui conviennent à votre véhicule."
+      }
+    },
+    {
+      "key": "facility.details.battery",
+      "before": {
+        "en": "Battery disconnect and intelligent charger service is available for most vehicles.",
+        "fr": "Le service de déconnexion et de charge intelligente de batterie est offert pour la majorité des véhicules."
+      },
+      "after": {
+        "en": "Ask which battery services are available for your vehicle and season.",
+        "fr": "Demandez quels services de batterie sont offerts pour votre véhicule et votre saison."
+      }
+    },
+    {
+      "key": "facility.details.appointments",
+      "before": {
+        "en": "Drop-off appointments coordinated 7 days in advance.",
+        "fr": "Les rendez-vous de dépôt se coordonnent 7 jours à l’avance."
+      },
+      "after": {
+        "en": "Arrange drop-off and pickup appointments with us in advance; consult the seasonal conditions below.",
+        "fr": "Convenez à l’avance des rendez-vous de dépôt et de récupération; consultez les conditions saisonnières ci-dessous."
+      }
+    },
+    {
+      "key": "contactSection.talkBodySecondary",
+      "before": {
+        "en": "We are 60 minutes from Montréal and 45 minutes from Ottawa. Drop-offs are by appointment to keep traffic moving.",
+        "fr": "Nous sommes à 60 minutes de Montréal et 45 minutes d’Ottawa. Les dépôts se font sur rendez-vous pour garder la circulation fluide."
+      },
+      "after": {
+        "en": "The storage facility is in Alfred, Ontario. Before travelling from Plantagenet, Curran, Ottawa or Montréal, contact us for the exact entrance and directions, and confirm your appointment.",
+        "fr": "L’installation d’entreposage se trouve à Alfred, en Ontario. Avant de partir de Plantagenet, Curran, Ottawa ou Montréal, contactez-nous pour obtenir l’entrée exacte et les indications, puis confirmez votre rendez-vous."
+      }
+    },
+    {
+      "key": "access.heading",
+      "before": null,
+      "after": {
+        "en": "Plan your storage and arrival",
+        "fr": "Préparez votre entreposage et votre arrivée"
+      }
+    },
+    {
+      "key": "access.body",
+      "before": null,
+      "after": {
+        "en": "Check the seasonal dates and conditions before requesting a space. Vehicle access is not provided during storage under the current conditions. Confirm winter drop-off and pickup arrangements with us before travelling. Use the storage request form to provide your vehicle details; we will confirm suitability, availability and the agreement.",
+        "fr": "Consultez les dates et conditions saisonnières avant de demander une place. Selon les conditions actuelles, l’accès au véhicule n’est pas offert pendant l’entreposage. Confirmez avec nous les modalités de dépôt et de récupération en hiver avant de vous déplacer. Indiquez les détails du véhicule dans le formulaire de demande; nous confirmerons la compatibilité, la disponibilité et le contrat."
+      }
+    },
+    {
+      "key": "access.nojs",
+      "before": null,
+      "after": {
+        "en": "To calculate pricing and send a request online, enable JavaScript. You can also call 514-627-5377 to discuss availability and booking.",
+        "fr": "Activez JavaScript pour calculer le tarif et envoyer une demande en ligne. Vous pouvez aussi appeler le 514-627-5377 pour connaître les disponibilités et réserver."
+      }
+    },
+    {
+      "key": "image.exterior",
+      "before": null,
+      "after": {
+        "en": "Ferme Colle vehicle storage buildings in Alfred",
+        "fr": "Bâtiments d’entreposage de véhicules de la Ferme Colle à Alfred"
+      }
+    },
+    {
+      "key": "image.interior",
+      "before": null,
+      "after": {
+        "en": "RVs and a pickup truck inside the storage warehouse",
+        "fr": "VR et camionnette dans l’entrepôt"
+      }
+    },
+    {
+      "key": "image.outdoor",
+      "before": null,
+      "after": {
+        "en": "Outdoor area at the Alfred facility",
+        "fr": "Aire extérieure de l’installation à Alfred"
+      }
+    },
+    {
+      "key": "seo.areaServed",
+      "before": null,
+      "after": {
+        "en": "Alfred;Plantagenet;Curran;Ottawa;Montréal",
+        "fr": "Alfred;Plantagenet;Curran;Ottawa;Montréal"
+      }
+    }
+  ]
+}

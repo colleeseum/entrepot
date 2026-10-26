@@ -59,7 +59,7 @@
               </div>
             </div>
             <figure class="hero__media">
-              <img src="/static/images/exterior.jpg" alt="" data-i18n="image.exterior" data-i18n-attr="alt" loading="lazy">
+              <img src="/static/images/exterior.jpg" alt="" data-i18n="image.exterior" data-i18n-fallback-key="hero.caption" data-i18n-attr="alt" loading="lazy">
               <figcaption data-i18n="hero.caption"></figcaption>
             </figure>
           </section>
@@ -72,12 +72,12 @@
             </header>
             <div class="facility__grid">
               <article>
-                <img src="/static/images/interior-full.jpg" alt="" data-i18n="image.interior" data-i18n-attr="alt" loading="lazy">
+                <img src="/static/images/interior-full.jpg" alt="" data-i18n="image.interior" data-i18n-fallback-key="hero.caption" data-i18n-attr="alt" loading="lazy">
                 <h3 data-i18n="facility.indoor.title"></h3>
                 <p data-i18n="facility.indoor.body"></p>
               </article>
               <article>
-                <img src="/static/images/outside.jpg" alt="" data-i18n="image.outdoor" data-i18n-attr="alt" loading="lazy">
+                <img src="/static/images/outside.jpg" alt="" data-i18n="image.outdoor" data-i18n-fallback-key="hero.caption" data-i18n-attr="alt" loading="lazy">
                 <h3 data-i18n="facility.outdoor.title"></h3>
                 <p data-i18n="facility.outdoor.body"></p>
               </article>
@@ -121,7 +121,7 @@
             </div>
           </section>
 
-          <section class="section" id="arrival">
+          <section class="section" id="arrival" data-content-requires="access.heading,access.body,access.nojs">
             <h2 data-i18n="access.heading"></h2>
             <p data-i18n="access.body"></p>
             <noscript><p data-i18n="access.nojs"></p></noscript>
