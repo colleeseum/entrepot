@@ -1550,3 +1550,12 @@ A:hover {
     transform: none;
   }
 }
+
+.service-area {
+  margin-top: 16px;
+}
+
+.service-area > summary {
+  cursor: pointer;
+  font-weight: 600;
+}

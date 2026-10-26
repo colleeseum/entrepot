@@ -39,6 +39,8 @@ Set `BROWSER_EXECUTABLE` to use an existing Chromium binary. Screenshots are wri
 
 The service-area follow-up is recorded in `database/service-area-copy.changes.json` and `database/service-area-offer-label.changes.json`. It is staged in production for Tracker diff review and exported in this branch, without triggering publication. See [the focused change notes](docs/service-area-copy.md).
 
+The regional alignment follow-up is recorded in `database/regional-service-copy.changes.json`. It keeps the short regional introduction and expandable community list consistent, with translated copy supplied by the database.
+
 ## URLs
 
 `/en/` and `/fr/` are canonical public pages with reciprocal hreflang. `/` and `/index.html` continue serving English with the same anchors and an `/en/` canonical. There is no browser-language or saved-preference redirect. Explicit old root links such as `/?lang=fr#contact` and `/#fr` navigate to the corresponding language path when JavaScript is available, preserving ordinary fragments and other parameters. Without JavaScript these legacy URLs display the English root with working language links. Explicit `/en/` or `/fr/` paths take precedence over conflicting query parameters and saved preferences.
