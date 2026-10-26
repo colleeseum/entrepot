@@ -1,0 +1,18 @@
+{
+  "collection": "storageOffers",
+  "field": "label",
+  "description": "Copy-only correction of the mixed-language vehicle label. No price, availability, vehicle-type or booking fields change.",
+  "changes": [
+    {
+      "key": "winter-car-long",
+      "before": {
+        "en": "Indoor car/truck",
+        "fr": "Voiture/truck intérieure"
+      },
+      "after": {
+        "en": "Indoor car or truck",
+        "fr": "Voiture ou camion à l’intérieur"
+      }
+    }
+  ]
+}

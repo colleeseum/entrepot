@@ -25,7 +25,11 @@ export function planContentChanges(changes, documents) {
 async function main() {
   const args = process.argv.slice(2);
   const option = flag => args[args.indexOf(flag) + 1];
-  const proposal = JSON.parse(await readFile(new URL('../database/seo-content.changes.json', import.meta.url), 'utf8'));
+  const changesPath = args.includes('--changes') ? resolve(option('--changes')) : new URL('../database/seo-content.changes.json', import.meta.url);
+  const proposal = JSON.parse(await readFile(changesPath, 'utf8'));
+  const contentField = proposal.field || 'text';
+  if (!['text', 'label'].includes(contentField)) throw new Error('Only text or label fields may be migrated');
+  if (contentField === 'label' && proposal.changes.some(change => change.before === null)) throw new Error('Label migrations cannot create offers');
   if (!args.includes('--apply')) {
     console.log('REVIEW ONLY. No database connection, write, export or publication performed.');
     console.log(JSON.stringify(proposal, null, 2));
@@ -47,19 +51,20 @@ async function main() {
   try {
     // Transaction prevents overwriting an owner's concurrent edits. Preserve all other fields.
     const snapshot = await db.collection(proposal.collection).get();
-    const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), text: doc.data()[contentField] }));
     const preview = planContentChanges(proposal.changes, docs);
     const backup = preview.filter(change => change.status !== 'unchanged').map(change => ({
-      path: `${proposal.collection}/${change.id}`, existed: change.status !== 'create', key: change.key, text: change.before
+      path: `${proposal.collection}/${change.id}`, field: contentField, existed: change.status !== 'create', key: change.key, text: change.before
     }));
     await writeFile(backupPath, JSON.stringify({ projectId, collection: proposal.collection, documents: backup }, null, 2) + '\n', { flag: 'wx' });
     await db.runTransaction(async transaction => {
       const current = await transaction.get(db.collection(proposal.collection));
-      const plan = planContentChanges(proposal.changes, current.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const plan = planContentChanges(proposal.changes, current.docs.map(doc => ({ id: doc.id, ...doc.data(), text: doc.data()[contentField] })));
       // A concurrent create must not escape the saved backup's document paths.
       if (!isDeepStrictEqual(plan, preview)) throw new Error('Database changed after backup; no writes performed. Review and retry with a fresh backup.');
       for (const change of plan.filter(change => change.status !== 'unchanged')) {
-        const fields = { key: change.key, text: change.after, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+        const fields = { [contentField]: change.after, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+        if (contentField === 'text') fields.key = change.key;
         if (change.status === 'create') Object.assign(fields, { category: change.key.split('.')[0], hint: '', createdAt: admin.firestore.FieldValue.serverTimestamp() });
         transaction.set(db.collection(proposal.collection).doc(change.id), fields, { merge: true });
       }
