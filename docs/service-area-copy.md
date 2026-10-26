@@ -19,6 +19,6 @@ No merge, publication request or deployment was performed. Review the diff in Tr
 
 ## Focused validation
 
-- `npm run build` and `node --test tests/service-area-copy.test.mjs` passed. Tests cover all 12 communities in both visible content and JSON-LD, concise descriptions, locality-only facility information, the mailing disclaimer beside St-Eustache, complete service sentences with price placeholders, and the exported database values.
+- `npm run build` and `node --test tests/service-area-copy.test.mjs` passed. Tests render the reviewed change-set fixtures to check all 12 communities, concise descriptions, locality-only facility information, the mailing disclaimer beside St-Eustache and complete service sentences with price placeholders. Separate English/French regression cases render alternate owner-edited communities, descriptions, mailing labels, service wording and offer labels. These tests do not read the mutable database export or require later Tracker edits to retain the reviewed copy.
 - The before/after exports were compared. All pricing, availability, seasonal fields, contract conditions, vehicle types, add-ons and unrelated translations are identical. Only selected translations, one offer label and its audit timestamp changed. Contract PDFs and booking JavaScript are unchanged.
 - Only the affected facility, services and footer sections were checked visually in English/French at 1440px and 390px with JavaScript disabled. No horizontal overflow was found. No form submissions were made.

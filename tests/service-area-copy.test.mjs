@@ -3,16 +3,35 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parseHTML } from 'linkedom';
 import { planContentChanges } from '../scripts/migrate-seo-content.mjs';
-import { I18N } from '../static/generated/website-text.generated.js';
+import { renderPage } from '../scripts/render-page.mjs';
+
+const [template, copyJson, labelsJson] = await Promise.all([
+  readFile(new URL('../templates/home.html', import.meta.url), 'utf8'),
+  readFile(new URL('../database/service-area-copy.changes.json', import.meta.url), 'utf8'),
+  readFile(new URL('../database/service-area-offer-label.changes.json', import.meta.url), 'utf8')
+]);
+const copyProposal = JSON.parse(copyJson);
+const labelProposal = JSON.parse(labelsJson);
+// Reviewed copy is a fixture, not a requirement imposed on future Tracker exports.
+const reviewedCopy = {
+  'seo.title': { en: 'Storage fixture', fr: 'Entreposage fictif' },
+  ...Object.fromEntries(copyProposal.changes.map(change => [change.key, change.after]))
+};
+const reviewedSeasons = [{
+  name: { en: 'Reviewed season', fr: 'Saison révisée' },
+  offers: labelProposal.changes.map(change => ({ id: change.key, label: change.after }))
+}];
+const renderFixture = (lang, i18n = reviewedCopy, seasons = reviewedSeasons) =>
+  parseHTML(renderPage(template, lang, { i18n, seasons, conditions: [] })).document;
 
 const communities = ['Alfred', 'Plantagenet', 'Curran', 'Hawkesbury', 'L’Orignal', 'Vankleek Hill', 'Wendover', 'Lefaivre', 'Rockland', 'Saint-Isidore', 'Ottawa', 'Montréal'];
-for (const lang of ['en', 'fr']) test(`${lang}: service-area copy, location privacy, mailing label and complete sentences`, async () => {
-  const { document } = parseHTML(await readFile(new URL(`../_site/${lang}/index.html`, import.meta.url), 'utf8'));
+for (const lang of ['en', 'fr']) test(`${lang}: reviewed service-area copy, location privacy, mailing label and complete sentences`, () => {
+  const document = renderFixture(lang);
   const serviceArea = document.querySelector('[data-i18n="facility.serviceArea"]').textContent;
   for (const name of communities) assert.ok(serviceArea.includes(name), `missing ${name}`);
-  assert.equal(serviceArea, I18N['facility.serviceArea'][lang]);
+  assert.equal(serviceArea, reviewedCopy['facility.serviceArea'][lang]);
   const schema = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
-  assert.deepEqual(schema.areaServed, I18N['seo.areaServed'][lang].split(';').map(name => name.trim()).filter(Boolean));
+  assert.deepEqual(schema.areaServed, reviewedCopy['seo.areaServed'][lang].split(';').map(name => name.trim()).filter(Boolean));
   for (const name of communities) assert.ok(schema.areaServed.includes(name));
   assert.deepEqual(Object.keys(schema.address).sort(), ['@type', 'addressCountry', 'addressLocality', 'addressRegion']);
   assert.equal(schema.address.addressLocality, 'Alfred');
@@ -20,7 +39,7 @@ for (const lang of ['en', 'fr']) test(`${lang}: service-area copy, location priv
   assert.equal(schema.hasMap, undefined);
   assert.doesNotMatch(document.body.textContent, /Conc 4|K0B 1A0/);
   const mailingLabel = document.querySelector('[data-i18n="footer.office"]');
-  assert.equal(mailingLabel.textContent, I18N['footer.office'][lang]);
+  assert.equal(mailingLabel.textContent, reviewedCopy['footer.office'][lang]);
   assert.match(mailingLabel.parentElement.textContent, /St-Eustache/);
   assert.match(mailingLabel.textContent, lang === 'en' ? /Mailing address only.*no vehicle storage/ : /Adresse postale seulement.*aucun entreposage/);
   const description = document.querySelector('meta[name="description"]').content;
@@ -35,6 +54,31 @@ for (const lang of ['en', 'fr']) test(`${lang}: service-area copy, location priv
     assert.doesNotMatch(document.querySelector('#season-grid').textContent, /truck/i);
     assert.doesNotMatch(document.querySelector('[data-i18n="services.battery.body"]').textContent, /service de déconnexion et de charge\s*$/i);
     assert.match(document.querySelector('[data-i18n="contractHelper.intro"]').textContent, /formulaire.*demander un espace/);
+  }
+});
+
+for (const lang of ['en', 'fr']) test(`${lang}: owner edits render without retaining the reviewed wording or communities`, () => {
+  const alternate = {
+    ...reviewedCopy,
+    'facility.serviceArea': { [lang]: 'Owner edited service-area paragraph' },
+    'seo.areaServed': { [lang]: 'Village A; Village B' },
+    'seo.description': { [lang]: 'Owner edited search description' },
+    'footer.office': { [lang]: 'Owner edited mailing label' },
+    'services.battery.body': { [lang]: 'Owner edited battery details! <span data-service-price="battery"></span>' },
+    'services.propane.body': { [lang]: 'Owner edited propane details! <span data-service-price="propane"></span>' }
+  };
+  const seasons = [{ name: { [lang]: 'Owner edited season' }, offers: [{ label: { [lang]: 'Owner edited offer label' } }] }];
+  const document = renderFixture(lang, alternate, seasons);
+  assert.equal(document.querySelector('[data-i18n="facility.serviceArea"]').textContent, alternate['facility.serviceArea'][lang]);
+  assert.equal(document.querySelector('[data-i18n="footer.office"]').textContent, alternate['footer.office'][lang]);
+  assert.equal(document.querySelector('meta[name="description"]').content, alternate['seo.description'][lang]);
+  const schema = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+  assert.deepEqual(schema.areaServed, ['Village A', 'Village B']);
+  assert.match(document.querySelector('#season-grid').textContent, /Owner edited offer label/);
+  for (const service of ['battery', 'propane']) {
+    const paragraph = document.querySelector(`[data-i18n="services.${service}.body"]`);
+    assert.equal(paragraph.textContent.trim(), `Owner edited ${service} details!`);
+    assert.ok(paragraph.querySelector(`[data-service-price="${service}"]`));
   }
 });
 
