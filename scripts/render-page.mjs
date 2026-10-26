@@ -51,7 +51,8 @@ export function renderPage(template, lang, { i18n, seasons, conditions }) {
     description, telephone: '+1-514-627-5377',
     email: lang === 'fr' ? 'entrepot@as-colle.com' : 'warehouse@as-colle.com',
     image: `${ORIGIN}/static/images/exterior.jpg`,
-    address: { '@type': 'PostalAddress', streetAddress: 'Conc 4', addressLocality: 'Alfred', addressRegion: 'ON', postalCode: 'K0B 1A0', addressCountry: 'CA' },
+    // Publish the community only. Facility street address and coordinates are private.
+    address: { '@type': 'PostalAddress', addressLocality: 'Alfred', addressRegion: 'ON', addressCountry: 'CA' },
     ...(t('seo.areaServed') ? { areaServed: t('seo.areaServed').split(';').map(name => name.trim()).filter(Boolean) } : {}),
     contactPoint: { '@type': 'ContactPoint', telephone: '+1-514-627-5377', contactType: 'reservations', availableLanguage: ['en', 'fr'] }
   }, null, 2).replace(/</g, '\\u003c');

@@ -32,10 +32,12 @@ Set `BROWSER_EXECUTABLE` to use an existing Chromium binary. Screenshots are wri
 - `static/i18n-fallbacks.js` holds existing application fallback translations, shared by browser and build.
 - Database copy is authoritative. Both browser and build use the Tracker export directly, without a marketing overlay. Tracker staging edits are used directly as well.
 - `seo.title` and `seo.description` are database translation keys. Until they are created, metadata uses the existing database `hero.title` and `hero.description`. The arrival section appears only when all of its database keys exist; image descriptions fall back to the existing database caption.
-- `database/seo-content.changes.json` is a separate, review-only database change set. It is never loaded by the build or browser, and is not included in `_site/`. It records before/after translations for owner review. See [the database migration instructions](database/README.md). No database changes have been applied.
+- `database/seo-content.changes.json` is a separate, review-only database change set. It is never loaded by the build or browser, and is not included in `_site/`. It records before/after translations for owner review. See [the database migration instructions](database/README.md). Database changes are staged separately from publishing.
 - `scripts/build-site.mjs` produces `/en/`, `/fr/`, the English root compatibility alias, discovery files, assets and staging in `_site/`. It reuses translations and seasonal data without contacting Firebase.
 - The regular deploy workflow runs on `main` pushes or explicit manual dispatch. The Tracker publishing workflow rebuilds after exporting content. Feature-branch pushes and PR checks validate without publishing. Do not dispatch a deployment workflow on an incomplete branch.
 - No hosting, DNS, Firebase endpoints, pricing calculations or request submission APIs were changed.
+
+The service-area follow-up is recorded in `database/service-area-copy.changes.json` and `database/service-area-offer-label.changes.json`. It is staged in production for Tracker diff review and exported in this branch, without triggering publication. See [the focused change notes](docs/service-area-copy.md).
 
 ## URLs
 

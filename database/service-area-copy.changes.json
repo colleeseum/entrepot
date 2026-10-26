@@ -1,0 +1,173 @@
+{
+  "collection": "i18nEntries",
+  "description": "Bilingual service areas, locality-only facility disclosure, mailing-only label and complete marketing sentences. Apply to the database without publishing.",
+  "changes": [
+    {
+      "key": "facility.serviceArea",
+      "before": null,
+      "after": {
+        "en": "Our Alfred facility serves customers from Alfred, Plantagenet, Curran, Hawkesbury, L’Orignal, Vankleek Hill, Wendover, Lefaivre, Rockland and Saint-Isidore. We also welcome customers travelling from Ottawa and Montréal. All vehicle storage takes place at the Alfred facility.",
+        "fr": "Notre installation à Alfred dessert les clients d’Alfred, de Plantagenet, de Curran, de Hawkesbury, de L’Orignal, de Vankleek Hill, de Wendover, de Lefaivre, de Rockland et de Saint-Isidore. Nous accueillons aussi les clients d’Ottawa et de Montréal. Tous les véhicules sont entreposés à notre installation d’Alfred."
+      }
+    },
+    {
+      "key": "seo.areaServed",
+      "before": {
+        "en": "Alfred;Plantagenet;Curran;Ottawa;Montréal",
+        "fr": "Alfred;Plantagenet;Curran;Ottawa;Montréal"
+      },
+      "after": {
+        "en": "Alfred;Plantagenet;Curran;Hawkesbury;L’Orignal;Vankleek Hill;Wendover;Lefaivre;Rockland;Saint-Isidore;Ottawa;Montréal",
+        "fr": "Alfred;Plantagenet;Curran;Hawkesbury;L’Orignal;Vankleek Hill;Wendover;Lefaivre;Rockland;Saint-Isidore;Ottawa;Montréal"
+      }
+    },
+    {
+      "key": "seo.description",
+      "before": {
+        "en": "Indoor and seasonal storage for RVs, trailers, cars and motorcycles in Alfred, near Plantagenet and Curran. Serving customers from Ottawa and Montréal.",
+        "fr": "Entreposage intérieur et saisonnier de VR, roulottes, voitures et motos à Alfred, près de Plantagenet et Curran. Clients d’Ottawa et de Montréal bienvenus."
+      },
+      "after": {
+        "en": "Our Alfred facility offers indoor and seasonal vehicle storage for customers from Eastern Ontario, Ottawa and Montréal.",
+        "fr": "Notre installation d’Alfred offre l’entreposage intérieur et saisonnier de véhicules aux clients de l’Est ontarien, d’Ottawa et de Montréal."
+      }
+    },
+    {
+      "key": "footer.address",
+      "before": {
+        "en": "Address",
+        "fr": "Adresse"
+      },
+      "after": {
+        "en": "Storage facility location",
+        "fr": "Lieu d’entreposage"
+      }
+    },
+    {
+      "key": "footer.location",
+      "before": null,
+      "after": {
+        "en": "Alfred, Ontario. Contact us for arrival directions after your appointment is confirmed.",
+        "fr": "Alfred, Ontario. Contactez-nous pour obtenir les indications d’arrivée après confirmation de votre rendez-vous."
+      }
+    },
+    {
+      "key": "footer.office",
+      "before": {
+        "en": "Office",
+        "fr": "Bureau"
+      },
+      "after": {
+        "en": "Mailing address only — no vehicle storage at this location.",
+        "fr": "Adresse postale seulement — aucun entreposage de véhicules à cet endroit."
+      }
+    },
+    {
+      "key": "footer.mailingAddress",
+      "before": null,
+      "after": {
+        "en": "Ferme Colle • 276 rue Dolbec, Suite 200, St-Eustache, QC J7R 6N5",
+        "fr": "Ferme Colle • 276 rue Dolbec, bureau 200, St-Eustache, QC J7R 6N5"
+      }
+    },
+    {
+      "key": "contactSection.talkBodyPrimary",
+      "before": {
+        "en": "Phone: <a href=\"tel:514-627-5377\">514-627-5377</a><br />Email: <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a><br />Site: Conc 4, Alfred, ON K0B 1A0",
+        "fr": "Téléphone : <a href=\"tel:514-627-5377\">514-627-5377</a><br />Courriel : <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a><br />Site : Conc 4, Alfred, ON K0B 1A0"
+      },
+      "after": {
+        "en": "Phone: <a href=\"tel:514-627-5377\">514-627-5377</a><br />Email: <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a><br />Facility: Alfred, Ontario",
+        "fr": "Téléphone : <a href=\"tel:514-627-5377\">514-627-5377</a><br />Courriel : <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a><br />Installation : Alfred, Ontario"
+      }
+    },
+    {
+      "key": "contactSection.talkBodySecondary",
+      "before": {
+        "en": "The storage facility is in Alfred, Ontario. Before travelling from Plantagenet, Curran, Ottawa or Montréal, contact us for the exact entrance and directions, and confirm your appointment.",
+        "fr": "L’installation d’entreposage se trouve à Alfred, en Ontario. Avant de partir de Plantagenet, Curran, Ottawa ou Montréal, contactez-nous pour obtenir l’entrée exacte et les indications, puis confirmez votre rendez-vous."
+      },
+      "after": {
+        "en": "Vehicle storage is at our Alfred facility. Contact us to confirm your appointment and obtain arrival directions before travelling. The St-Eustache address is for mail only; no vehicle storage is available there.",
+        "fr": "L’entreposage de véhicules se fait à notre installation d’Alfred. Contactez-nous pour confirmer votre rendez-vous et obtenir les indications d’arrivée avant de vous déplacer. L’adresse de St-Eustache sert uniquement au courrier; aucun entreposage de véhicules n’y est offert."
+      }
+    },
+    {
+      "key": "contactSection.eyebrow",
+      "before": {
+        "en": "Inquiries?",
+        "fr": "Des question?"
+      },
+      "after": {
+        "en": "Questions?",
+        "fr": "Des questions?"
+      }
+    },
+    {
+      "key": "contactSection.heading",
+      "before": {
+        "en": "Call or email—everything routes to our professional team",
+        "fr": "Téléphone ou, écrivez : tout se rend à notre équipe"
+      },
+      "after": {
+        "en": "Call or email our team",
+        "fr": "Appelez-nous ou écrivez-nous"
+      }
+    },
+    {
+      "key": "contractHelper.intro",
+      "before": {
+        "en": "Use the form below to request storage. We will follow up with the agreement once the request is reviewed. Questions or changes? <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>.",
+        "fr": "Utilisez l’assistant ci-dessous pour générer votre contrat et l’envoyer à <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>. Si l’assistant n’est pas disponible, utilisez plutôt le gabarit téléchargeable."
+      },
+      "after": {
+        "en": "Use the form below to request storage. We will follow up with the agreement once the request is reviewed. For questions or changes, email <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>.",
+        "fr": "Utilisez le formulaire ci-dessous pour demander un espace d’entreposage. Nous vous enverrons le contrat après examen de votre demande. Pour toute question ou modification, écrivez à <a href=\"mailto:storage@as-colle.com\" data-contact-email>storage@as-colle.com</a>."
+      }
+    },
+    {
+      "key": "contractHelper.readerNote",
+      "before": {
+        "en": "Submit one request per vehicle so we can prepare the right agreement and insurance checklist for you.",
+        "fr": "Soumettez une demande par vehicule afin que nous puissions preparer le bon contrat et la liste d’assurance pour vous."
+      },
+      "after": {
+        "en": "Submit one request per vehicle so we can prepare the right agreement and insurance checklist for you.",
+        "fr": "Soumettez une demande par véhicule afin que nous puissions préparer le bon contrat et la liste d’assurance pour vous."
+      }
+    },
+    {
+      "key": "contractSection.eyebrow",
+      "before": {
+        "fr": "Contrats et dépôts",
+        "en": "Storage requests"
+      },
+      "after": {
+        "en": "Storage requests",
+        "fr": "Demandes d’entreposage"
+      }
+    },
+    {
+      "key": "services.battery.body",
+      "before": {
+        "fr": "Des chargeurs intelligents maintiennent votre batterie en santé pendant l’entreposage intérieur. Le service de déconnexion et de charge  <strong><span data-service-price=\"battery\"></span></strong>.",
+        "en": "Intelligent chargers keep your battery topped up and conditioned while the vehicle is parked indoors. Battery disconnect and intelligent charger service is available. <strong><span data-service-price=\"battery\"></span></strong>"
+      },
+      "after": {
+        "en": "Battery disconnect and intelligent charging are available as add-on services for indoor storage. Ask us to confirm suitability and seasonal pricing for your vehicle. <strong><span data-service-price=\"battery\"></span></strong>",
+        "fr": "La déconnexion et la charge intelligente de la batterie sont offertes en option pour l’entreposage intérieur. Demandez-nous de confirmer la compatibilité et le tarif saisonnier pour votre véhicule. <strong><span data-service-price=\"battery\"></span></strong>"
+      }
+    },
+    {
+      "key": "services.propane.body",
+      "before": {
+        "en": "Drop your propane tank at check-in and we store it separately in a well ventilated location so your RV can stay on site. Flat <strong><span data-service-price=\"propane\"></span></strong> per season. (max: 2 tank)",
+        "fr": "Déposez vos bonbonnes lors de l’arrivée et nous les rangeons dans un endroit bien ventilée pour que votre VR demeure sur place. <strong><span data-service-price=\"propane\"></span></strong> par saison. (max: 2 bonbonne)"
+      },
+      "after": {
+        "en": "We store propane tanks separately in a well-ventilated location during your vehicle’s storage season. A maximum of two tanks can be stored. <strong><span data-service-price=\"propane\"></span></strong>",
+        "fr": "Nous entreposons les bonbonnes de propane séparément, dans un endroit bien ventilé, pendant la saison d’entreposage du véhicule. Nous acceptons un maximum de deux bonbonnes. <strong><span data-service-price=\"propane\"></span></strong>"
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Proposed database copy changes
 
-Status: prepared for review only. No database reads/writes or website publication were performed by the migration tool during this revision.
+The initial SEO copy was later applied at the owner’s request. The service-area follow-up is staged in production for Tracker review; no publication was triggered by that follow-up. See [the focused change notes](../docs/service-area-copy.md).
 
 `seo-content.changes.json` records the proposed before/after English/French values for `i18nEntries` in Tracker. It replaces the previous hardcoded marketing overlay. The browser, build and deployment workflows never read this file. The proposal contains no pricing, policy, availability, address or contact changes. It adds metadata, image descriptions and arrival guidance, and revises existing marketing wording.
 
@@ -40,3 +40,11 @@ Applying database changes does not publish the website. Afterwards, use Tracker'
 - Unit checks verify database edits win over all application content, proposed translations render correctly, already-applied changes are skipped, and concurrent edits/duplicate keys are rejected.
 - The production build uses only the committed database export and existing application fallbacks.
 - The `--apply` path and actual Firebase writes have not been exercised. No database changes or publish requests were made.
+
+## Service-area follow-up
+
+`service-area-copy.changes.json` records the bilingual `i18nEntries` updates. `service-area-offer-label.changes.json` records a label-only update to an existing `storageOffers` document. The generated website snapshot was refreshed through Tracker’s exporter, not edited manually.
+
+Use `--changes <path>` to select a change set for offline review or explicit application. The default remains the initial SEO proposal. A change set may specify `field: "label"` for an existing offer; only that field and its audit timestamp are written. Label migrations cannot create offers. Backup entries record which field changed. All existing target checks, expected-value conflict checks and transactional writes remain in place.
+
+Do not reapply the initial proposal to undo later owner edits. Application remains separate from merging and publishing.
