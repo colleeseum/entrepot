@@ -67,13 +67,14 @@
         // Prevent double-loading the site script (the copied production body includes it).
         document.querySelectorAll('script[src]').forEach((script) => {
           const src = script.getAttribute("src") || "";
-          if (src.endsWith("/static/site.js") || src.endsWith("./static/site.js") || src === "./static/site.js") {
+          if (["site.js", "service-area.js"].some((file) => src.endsWith(`/static/${file}`))) {
             script.remove();
           }
         });
 
         // Cache-bust during local iteration so changes are picked up after hard reloads.
         const cacheBust = Date.now();
+        await import(`/static/service-area.js?v=${cacheBust}`);
         await import(`/static/site.js?v=${cacheBust}`);
       };
 
