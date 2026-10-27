@@ -1,0 +1,17 @@
+{
+  "collection": "storageConditions",
+  "description": "Translate only the English seasonal condition. Preserve its meaning, French text and tooltip.",
+  "changes": [
+    {
+      "key": "ByvuxEUHg0hpDw7HVQGU",
+      "before": {
+        "en": "Les frais d’entreposage sont déterminés en fonction de la longueur du véhicule, arrondie au pied supérieur.",
+        "fr": "Toute fraction de pied sera arrondie au pied complet suivant aux fins de la tarification"
+      },
+      "after": {
+        "en": "Storage fees are based on the vehicle’s length, rounded up to the next whole foot.",
+        "fr": "Toute fraction de pied sera arrondie au pied complet suivant aux fins de la tarification"
+      }
+    }
+  ]
+}

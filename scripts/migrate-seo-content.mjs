@@ -64,7 +64,7 @@ async function main() {
       if (!isDeepStrictEqual(plan, preview)) throw new Error('Database changed after backup; no writes performed. Review and retry with a fresh backup.');
       for (const change of plan.filter(change => change.status !== 'unchanged')) {
         const fields = { [contentField]: change.after, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
-        if (contentField === 'text') fields.key = change.key;
+        if (contentField === 'text' && proposal.collection === 'i18nEntries') fields.key = change.key;
         if (change.status === 'create') Object.assign(fields, { category: change.key.split('.')[0], hint: '', createdAt: admin.firestore.FieldValue.serverTimestamp() });
         transaction.set(db.collection(proposal.collection).doc(change.id), fields, { merge: true });
       }

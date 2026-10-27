@@ -1,0 +1,28 @@
+{
+  "collection": "i18nEntries",
+  "description": "Add explicit vehicle-storage wording to French search metadata; preserve English metadata.",
+  "changes": [
+    {
+      "key": "seo.title",
+      "before": {
+        "en": "Indoor & Seasonal Vehicle Storage in Alfred | Ferme Colle",
+        "fr": "Entreposage intérieur et saisonnier à Alfred | Ferme Colle"
+      },
+      "after": {
+        "en": "Indoor & Seasonal Vehicle Storage in Alfred | Ferme Colle",
+        "fr": "Entreposage intérieur et saisonnier de véhicules à Alfred | Ferme Colle"
+      }
+    },
+    {
+      "key": "seo.description",
+      "before": {
+        "en": "Our Alfred facility offers indoor and seasonal vehicle storage to customers from Prescott and Russell, Ottawa and Montréal.",
+        "fr": "Notre installation d’Alfred offre l’entreposage intérieur et saisonnier aux clients de Prescott et Russell, d’Ottawa et de Montréal."
+      },
+      "after": {
+        "en": "Our Alfred facility offers indoor and seasonal vehicle storage to customers from Prescott and Russell, Ottawa and Montréal.",
+        "fr": "Notre installation d’Alfred offre l’entreposage intérieur et saisonnier de véhicules aux clients de Prescott et Russell, d’Ottawa et de Montréal."
+      }
+    }
+  ]
+}
