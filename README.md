@@ -23,7 +23,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Set `BROWSER_EXECUTABLE` to use an existing Chromium binary. Screenshots are written to ignored `test-results/`.
+Set `BROWSER_EXECUTABLE` to use an existing Chromium binary. Screenshots are written to ignored `test-results/`. Run `npm run test:popover` for focused information-popover checks.
 
 ## Content sources and publishing
 
@@ -38,6 +38,8 @@ Set `BROWSER_EXECUTABLE` to use an existing Chromium binary. Screenshots are wri
 - No hosting, DNS, Firebase endpoints, pricing calculations or request submission APIs were changed.
 
 The service-area follow-up is recorded in `database/service-area-copy.changes.json` and `database/service-area-offer-label.changes.json`. It is staged in production for Tracker diff review and exported in this branch, without triggering publication. See [the focused change notes](docs/service-area-copy.md).
+
+The regional alignment follow-up is recorded in `database/regional-service-copy.changes.json`. It keeps the short regional introduction and community information popover consistent, with translated copy supplied by the database.
 
 ## URLs
 

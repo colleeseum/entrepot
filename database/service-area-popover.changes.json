@@ -1,0 +1,17 @@
+{
+  "collection": "i18nEntries",
+  "description": "Use a concise bilingual Alfred-and-surrounding-areas label for the visitor-controlled information popover. No publication.",
+  "changes": [
+    {
+      "key": "facility.serviceAreaSummary",
+      "before": {
+        "en": "Communities served by our Alfred facility",
+        "fr": "Collectivités desservies par notre installation d’Alfred"
+      },
+      "after": {
+        "en": "Alfred and surrounding areas",
+        "fr": "Alfred et les environs"
+      }
+    }
+  ]
+}

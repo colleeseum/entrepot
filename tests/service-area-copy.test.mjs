@@ -5,17 +5,21 @@ import { parseHTML } from 'linkedom';
 import { planContentChanges } from '../scripts/migrate-seo-content.mjs';
 import { renderPage } from '../scripts/render-page.mjs';
 
-const [template, copyJson, labelsJson] = await Promise.all([
+const [template, copyJson, labelsJson, regionalJson, popoverJson] = await Promise.all([
   readFile(new URL('../templates/home.html', import.meta.url), 'utf8'),
   readFile(new URL('../database/service-area-copy.changes.json', import.meta.url), 'utf8'),
-  readFile(new URL('../database/service-area-offer-label.changes.json', import.meta.url), 'utf8')
+  readFile(new URL('../database/service-area-offer-label.changes.json', import.meta.url), 'utf8'),
+  readFile(new URL('../database/regional-service-copy.changes.json', import.meta.url), 'utf8'),
+  readFile(new URL('../database/service-area-popover.changes.json', import.meta.url), 'utf8')
 ]);
 const copyProposal = JSON.parse(copyJson);
 const labelProposal = JSON.parse(labelsJson);
+const regionalProposal = JSON.parse(regionalJson);
+const popoverProposal = JSON.parse(popoverJson);
 // Reviewed copy is a fixture, not a requirement imposed on future Tracker exports.
 const reviewedCopy = {
   'seo.title': { en: 'Storage fixture', fr: 'Entreposage fictif' },
-  ...Object.fromEntries(copyProposal.changes.map(change => [change.key, change.after]))
+  ...Object.fromEntries([...copyProposal.changes, ...regionalProposal.changes, ...popoverProposal.changes].map(change => [change.key, change.after]))
 };
 const reviewedSeasons = [{
   name: { en: 'Reviewed season', fr: 'Saison révisée' },
@@ -57,6 +61,29 @@ for (const lang of ['en', 'fr']) test(`${lang}: reviewed service-area copy, loca
   }
 });
 
+for (const lang of ['en', 'fr']) test(`${lang}: regional introduction and information popover stay consistent`, () => {
+  const document = renderFixture(lang);
+  const region = lang === 'en' ? 'Prescott and Russell' : 'Prescott et Russell';
+  const intro = document.querySelector('[data-i18n="hero.description"]').textContent;
+  assert.equal(intro, reviewedCopy['hero.description'][lang]);
+  assert.ok(intro.includes(region));
+  assert.ok(document.querySelector('[data-i18n="facility.heading"]').textContent.includes(region));
+  for (const community of communities.slice(1, 10)) assert.ok(!intro.includes(community), 'keep the full community list in one place');
+  const trigger = document.querySelector('.service-area__trigger');
+  const popover = document.getElementById(trigger.getAttribute('popovertarget'));
+  assert.equal(trigger.tagName, 'BUTTON');
+  assert.equal(trigger.getAttribute('type'), 'button');
+  assert.equal(trigger.getAttribute('aria-controls'), popover.id);
+  assert.equal(trigger.querySelector('[data-i18n]').textContent, reviewedCopy['facility.serviceAreaSummary'][lang]);
+  assert.equal(trigger.querySelector('.service-area__icon').getAttribute('aria-hidden'), 'true');
+  assert.equal(popover.getAttribute('popover'), 'auto');
+  assert.equal(popover.getAttribute('aria-labelledby'), trigger.id);
+  assert.ok(popover.querySelector('[data-i18n="facility.serviceArea"]').textContent.includes(region));
+  assert.equal(trigger.hasAttribute('hidden'), false);
+  const schema = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+  assert.ok(schema.areaServed.includes(lang === 'en' ? 'United Counties of Prescott and Russell' : 'Comtés unis de Prescott et Russell'));
+});
+
 for (const lang of ['en', 'fr']) test(`${lang}: owner edits render without retaining the reviewed wording or communities`, () => {
   const alternate = {
     ...reviewedCopy,
@@ -64,6 +91,7 @@ for (const lang of ['en', 'fr']) test(`${lang}: owner edits render without retai
     'seo.areaServed': { [lang]: 'Village A; Village B' },
     'seo.description': { [lang]: 'Owner edited search description' },
     'footer.office': { [lang]: 'Owner edited mailing label' },
+    'facility.serviceAreaSummary': { [lang]: 'Owner edited service-area label' },
     'services.battery.body': { [lang]: 'Owner edited battery details! <span data-service-price="battery"></span>' },
     'services.propane.body': { [lang]: 'Owner edited propane details! <span data-service-price="propane"></span>' }
   };
@@ -72,6 +100,7 @@ for (const lang of ['en', 'fr']) test(`${lang}: owner edits render without retai
   assert.equal(document.querySelector('[data-i18n="facility.serviceArea"]').textContent, alternate['facility.serviceArea'][lang]);
   assert.equal(document.querySelector('[data-i18n="footer.office"]').textContent, alternate['footer.office'][lang]);
   assert.equal(document.querySelector('meta[name="description"]').content, alternate['seo.description'][lang]);
+  assert.equal(document.querySelector('[data-i18n="facility.serviceAreaSummary"]').textContent, alternate['facility.serviceAreaSummary'][lang]);
   const schema = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
   assert.deepEqual(schema.areaServed, ['Village A', 'Village B']);
   assert.match(document.querySelector('#season-grid').textContent, /Owner edited offer label/);
@@ -85,6 +114,8 @@ for (const lang of ['en', 'fr']) test(`${lang}: owner edits render without retai
 test('reviewed change sets write translations and an existing offer label only', async () => {
   for (const [file, collection, field] of [
     ['service-area-copy.changes.json', 'i18nEntries', 'text'],
+    ['regional-service-copy.changes.json', 'i18nEntries', 'text'],
+    ['service-area-popover.changes.json', 'i18nEntries', 'text'],
     ['service-area-offer-label.changes.json', 'storageOffers', 'label']
   ]) {
     const proposal = JSON.parse(await readFile(new URL(`../database/${file}`, import.meta.url), 'utf8'));

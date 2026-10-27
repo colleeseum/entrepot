@@ -69,7 +69,15 @@
               <p class="eyebrow" data-i18n="facility.eyebrow"></p>
               <h2 data-i18n="facility.heading"></h2>
               <p data-i18n="facility.description"></p>
-              <p data-i18n="facility.serviceArea"></p>
+              <div class="service-area">
+                <button class="service-area__trigger" id="service-area-label" type="button" popovertarget="service-area-popover" aria-controls="service-area-popover">
+                  <span data-i18n="facility.serviceAreaSummary"></span>
+                  <span class="service-area__icon" aria-hidden="true">i</span>
+                </button>
+                <div id="service-area-popover" class="service-area__popover" popover="auto" role="region" aria-labelledby="service-area-label">
+                  <p data-i18n="facility.serviceArea"></p>
+                </div>
+              </div>
             </header>
             <div class="facility__grid">
               <article>
@@ -419,6 +427,7 @@
       </footer>
     </div>
 
+    <script src="/static/service-area.js" type="module"></script>
     <script src="/static/site.js" type="module"></script>
   </body>
 </html>

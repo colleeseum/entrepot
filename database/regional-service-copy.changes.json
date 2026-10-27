@@ -1,0 +1,69 @@
+{
+  "collection": "i18nEntries",
+  "description": "Align short and detailed service-area copy, include Prescott and Russell, and label an accessible native disclosure. Database changes only; do not publish automatically.",
+  "changes": [
+    {
+      "key": "hero.description",
+      "before": {
+        "en": "Store your RV, trailer, car or motorcycle at Ferme Colle in Alfred, near Plantagenet and Curran. Our Alfred facility also serves customers travelling from Ottawa and Montréal. Choose a seasonal plan and arrange drop-off and pickup with us.",
+        "fr": "Confiez votre VR, roulotte, voiture ou moto à la Ferme Colle, à Alfred, près de Plantagenet et de Curran. Notre installation à Alfred accueille aussi les clients qui se déplacent d’Ottawa et de Montréal. Choisissez votre entreposage saisonnier et convenez avec nous du dépôt et de la récupération."
+      },
+      "after": {
+        "en": "Store your RV, trailer, car or motorcycle at our Alfred facility, serving Prescott and Russell and customers travelling from Ottawa and Montréal. Choose a seasonal plan and arrange drop-off and pickup with us.",
+        "fr": "Confiez votre VR, roulotte, voiture ou moto à notre installation d’Alfred, qui dessert Prescott et Russell et accueille aussi les clients d’Ottawa et de Montréal. Choisissez votre entreposage saisonnier et convenez avec nous du dépôt et de la récupération."
+      }
+    },
+    {
+      "key": "facility.heading",
+      "before": {
+        "en": "Vehicle storage in Alfred, near Plantagenet and Curran",
+        "fr": "Entreposage à Alfred, près de Plantagenet et de Curran"
+      },
+      "after": {
+        "en": "Vehicle storage in Alfred, serving Prescott and Russell",
+        "fr": "Entreposage à Alfred au service de Prescott et Russell"
+      }
+    },
+    {
+      "key": "facility.serviceAreaSummary",
+      "before": null,
+      "after": {
+        "en": "Communities served by our Alfred facility",
+        "fr": "Collectivités desservies par notre installation d’Alfred"
+      }
+    },
+    {
+      "key": "facility.serviceArea",
+      "before": {
+        "en": "Our Alfred facility serves customers from Alfred, Plantagenet, Curran, Hawkesbury, L’Orignal, Vankleek Hill, Wendover, Lefaivre, Rockland and Saint-Isidore. We also welcome customers travelling from Ottawa and Montréal. All vehicle storage takes place at the Alfred facility.",
+        "fr": "Notre installation à Alfred dessert les clients d’Alfred, de Plantagenet, de Curran, de Hawkesbury, de L’Orignal, de Vankleek Hill, de Wendover, de Lefaivre, de Rockland et de Saint-Isidore. Nous accueillons aussi les clients d’Ottawa et de Montréal. Tous les véhicules sont entreposés à notre installation d’Alfred."
+      },
+      "after": {
+        "en": "Our Alfred facility serves communities in the United Counties of Prescott and Russell, including Alfred, Plantagenet, Curran, Hawkesbury, L’Orignal, Vankleek Hill, Wendover, Lefaivre, Rockland and Saint-Isidore. We also welcome customers travelling from Ottawa and Montréal. All vehicle storage takes place at the Alfred facility.",
+        "fr": "Notre installation d’Alfred dessert les collectivités des Comtés unis de Prescott et Russell, dont Alfred, Plantagenet, Curran, Hawkesbury, L’Orignal, Vankleek Hill, Wendover, Lefaivre, Rockland et Saint-Isidore. Nous accueillons aussi les clients d’Ottawa et de Montréal. Tous les véhicules sont entreposés à notre installation d’Alfred."
+      }
+    },
+    {
+      "key": "seo.description",
+      "before": {
+        "en": "Our Alfred facility offers indoor and seasonal vehicle storage for customers from Eastern Ontario, Ottawa and Montréal.",
+        "fr": "Notre installation d’Alfred offre l’entreposage intérieur et saisonnier de véhicules aux clients de l’Est ontarien, d’Ottawa et de Montréal."
+      },
+      "after": {
+        "en": "Our Alfred facility offers indoor and seasonal vehicle storage to customers from Prescott and Russell, Ottawa and Montréal.",
+        "fr": "Notre installation d’Alfred offre l’entreposage intérieur et saisonnier aux clients de Prescott et Russell, d’Ottawa et de Montréal."
+      }
+    },
+    {
+      "key": "seo.areaServed",
+      "before": {
+        "en": "Alfred;Plantagenet;Curran;Hawkesbury;L’Orignal;Vankleek Hill;Wendover;Lefaivre;Rockland;Saint-Isidore;Ottawa;Montréal",
+        "fr": "Alfred;Plantagenet;Curran;Hawkesbury;L’Orignal;Vankleek Hill;Wendover;Lefaivre;Rockland;Saint-Isidore;Ottawa;Montréal"
+      },
+      "after": {
+        "en": "Alfred;Plantagenet;Curran;Hawkesbury;L’Orignal;Vankleek Hill;Wendover;Lefaivre;Rockland;Saint-Isidore;Ottawa;Montréal;United Counties of Prescott and Russell",
+        "fr": "Alfred;Plantagenet;Curran;Hawkesbury;L’Orignal;Vankleek Hill;Wendover;Lefaivre;Rockland;Saint-Isidore;Ottawa;Montréal;Comtés unis de Prescott et Russell"
+      }
+    }
+  ]
+}
