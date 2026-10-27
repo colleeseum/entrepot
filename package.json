@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-site.mjs",
-    "test": "node --test tests/seo.test.mjs tests/service-area-copy.test.mjs",
+    "test": "node --test tests/seo.test.mjs tests/service-area-copy.test.mjs tests/review-language-copy.test.mjs",
     "test:browser": "node tests/browser.mjs",
     "test:popover": "node tests/service-area-popover.browser.mjs"
   },
